@@ -1,0 +1,100 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@300;400;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+
+  --color-brand-blue: #5B89BD;
+  --color-brand-teal: #2FB3A6;
+  --color-brand-orange: #E98150;
+  --color-brand-yellow: #FFD23F;
+  --color-brand-pink: #FF85A1;
+  --color-brand-lavender: #E0B1CB;
+  --color-brand-dark: #1A1A1A;
+}
+
+:root {
+  --pop-shadow: 4px 4px 0px 0px rgba(0,0,0,1);
+  --pop-shadow-lg: 8px 8px 0px 0px rgba(0,0,0,1);
+}
+
+body {
+  @apply bg-[#FFF9F2] text-[#1A1A1A] font-sans selection:bg-brand-yellow/50 selection:text-black;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+@layer utilities {
+  .yandasm-pop-card {
+    @apply bg-white rounded-[2rem] p-6 border-2 border-black transition-all hover:-translate-x-1 hover:-translate-y-1;
+    box-shadow: var(--pop-shadow);
+  }
+
+  .yandasm-pop-card:hover {
+    box-shadow: var(--pop-shadow-lg);
+  }
+
+  .nav-item-active {
+    @apply bg-brand-yellow text-black border-2 border-black font-extrabold rounded-2xl;
+    box-shadow: 2px 2px 0px 0px #000;
+  }
+
+  .btn-pop {
+    @apply font-black px-6 py-4 rounded-2xl border-2 border-black transition-all active:translate-x-1 active:translate-y-1 active:shadow-none;
+    box-shadow: var(--pop-shadow);
+  }
+
+  .btn-pop-primary {
+    @apply font-black px-6 py-4 rounded-2xl border-2 border-black transition-all active:translate-x-1 active:translate-y-1 active:shadow-none bg-brand-yellow text-black hover:bg-yellow-400;
+    box-shadow: 4px 4px 0px 0px #000;
+  }
+
+  .btn-pop-teal {
+    @apply font-black px-6 py-4 rounded-2xl border-2 border-black transition-all active:translate-x-1 active:translate-y-1 active:shadow-none bg-brand-teal text-white hover:bg-[#209489] shadow-[4px_4px_0px_0px_#000];
+  }
+
+  .btn-pop-orange {
+    @apply font-black px-6 py-4 rounded-2xl border-2 border-black transition-all active:translate-x-1 active:translate-y-1 active:shadow-none bg-brand-orange text-white hover:bg-[#D97241] shadow-[4px_4px_0px_0px_#000];
+  }
+
+  .btn-pop-blue {
+    @apply font-black px-6 py-4 rounded-2xl border-2 border-black transition-all active:translate-x-1 active:translate-y-1 active:shadow-none bg-brand-blue text-white hover:bg-[#3E628D] shadow-[4px_4px_0px_0px_#000];
+  }
+
+  @keyframes wiggle {
+    0%, 100% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
+  }
+
+  .animate-wiggle {
+    animation: wiggle 2s ease-in-out infinite;
+  }
+
+  .text-pop-outline {
+    text-shadow: 2px 2px 0px #000;
+  }
+
+  .markdown-body a {
+    @apply text-brand-yellow font-black underline decoration-2 underline-offset-2 hover:text-brand-yellow/80 transition-colors;
+  }
+
+  /* When the background is blue (belongsToMe) */
+  .bg-brand-blue .markdown-body a {
+    @apply text-brand-yellow;
+  }
+
+  /* When the background is white */
+  .bg-white .markdown-body a {
+    @apply text-brand-blue;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
