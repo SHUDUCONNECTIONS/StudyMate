@@ -173,13 +173,12 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
               />
               {!isLogin && (
                 <>
-                  <select 
+                  <select
                     className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 text-sm font-bold text-slate-400 outline-none"
                     value={formData.role} onChange={e => setFormData({...formData, role: e.target.value as any})}
                   >
                     <option value="learner">Student / Learner</option>
                     <option value="counsellor">Counsellor (Needs Approval)</option>
-                    <option value="admin">System Administrator</option>
                   </select>
                   {formData.role === 'counsellor' && (
                     <>
@@ -271,17 +270,12 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
                       setError('Password must be at least 6 characters.');
                       return;
                     }
-                    if (formData.role === 'admin') {
-                      const err = await onRegister(formData.name, formData.email, formData.password, formData.role, formData.specialty, formData.department, formData.year, formData.qualifications, formData.gender, formData.avatarSeed, formData.cvFileName, formData.profilePhoto);
-                      if (err) setError(err);
-                    } else {
-                      setStep(2);
-                    }
+                    setStep(2);
                   }
                 }}
                 className="w-full btn-primary mt-4"
               >
-                {isLogin ? 'Enter Workspace' : (formData.role === 'admin' ? 'Create Admin Account' : 'Next: POPIA Consent')}
+                {isLogin ? 'Enter Workspace' : 'Next: POPIA Consent'}
               </button>
             </>
           ) : (
