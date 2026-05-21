@@ -234,11 +234,11 @@ export const DashboardPage = ({
         </div>
         <div className="flex flex-col items-end gap-3">
           {/* Live clock */}
-          <div className="yandasm-pop-card bg-brand-dark text-white px-5 py-3 flex flex-col items-end border-2 border-black shadow-[4px_4px_0px_0px_#000]">
-            <span className="text-2xl font-display font-black tracking-tighter leading-none tabular-nums">
+          <div style={{ background: '#1A1A1A' }} className="px-5 py-3 flex flex-col items-end rounded-2xl border-2 border-black shadow-[4px_4px_0px_0px_#000]">
+            <span className="text-2xl font-display font-black tracking-tighter leading-none tabular-nums text-white">
               {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </span>
-            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/60 mt-0.5">
+            <span className="text-[9px] font-black uppercase tracking-[0.2em] mt-0.5" style={{ color: 'rgba(255,255,255,0.6)' }}>
               {now.toLocaleDateString('en-ZA', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             </span>
           </div>
