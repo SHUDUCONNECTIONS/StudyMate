@@ -3,27 +3,25 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Trophy } from 'lucide-react';
 
-export const ZipQuest = ({ onClose, playerName }: { onClose: () => void; playerName?: string }) => {
+export const ZipQuest = ({
+  onClose, playerName, leaderboard = [], onSaveScore,
+}: {
+  onClose: () => void;
+  playerName?: string;
+  leaderboard?: { name: string; score: number }[];
+  onSaveScore?: (score: number) => void;
+}) => {
   const [level, setLevel] = useState(1);
   const [timeLeft, setTimeLeft] = useState(5.0);
   const [isActive, setIsActive] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
   const [targetWord, setTargetWord] = useState('');
   const [input, setInput] = useState('');
-  const [leaderboard, setLeaderboard] = useState<{name: string, level: number}[]>([]);
 
   const words = ["focus", "calm", "zen", "joy", "peace", "mindful", "steady", "clarity", "power", "spirit", "glow", "kind", "pure", "vibe", "deep", "soft", "light", "bold", "free", "open", "heal", "grow", "rise", "soul", "love", "hope", "faith", "true", "real", "here", "now", "just", "stay", "well", "good", "life", "path", "goal", "dream", "idea", "know", "see", "hear", "feel", "try", "act", "be", "do"];
 
-  useEffect(() => {
-    const saved = localStorage.getItem('sm_leaderboard_zip');
-    if (saved) setLeaderboard(JSON.parse(saved));
-  }, []);
-
   const saveScore = (l: number) => {
-    const name = playerName || "Racer";
-    const updated = [...leaderboard, { name, level: l }].sort((a,b) => b.level - a.level).slice(0,5);
-    setLeaderboard(updated);
-    localStorage.setItem('sm_leaderboard_zip', JSON.stringify(updated));
+    onSaveScore?.(l);
   };
 
   useEffect(() => {
@@ -86,7 +84,7 @@ export const ZipQuest = ({ onClose, playerName }: { onClose: () => void; playerN
                  {leaderboard.map((e, i) => (
                    <div key={i} className="flex justify-between text-[10px] font-bold uppercase mb-1">
                      <span>{i+1}. {e.name}</span>
-                     <span>LVL {e.level}</span>
+                     <span>LVL {e.score}</span>
                    </div>
                  ))}
               </div>

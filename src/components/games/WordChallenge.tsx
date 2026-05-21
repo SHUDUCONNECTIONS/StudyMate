@@ -3,20 +3,23 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { History, CheckCircle2, Sparkles } from 'lucide-react';
 
-export const WordChallenge = ({ onClose, playerName }: { onClose: () => void; playerName?: string }) => {
+export const WordChallenge = ({
+  onClose, playerName, leaderboard = [], onSaveScore,
+}: {
+  onClose: () => void;
+  playerName?: string;
+  leaderboard?: { name: string; score: number }[];
+  onSaveScore?: (score: number) => void;
+}) => {
   const [guess, setGuess] = useState('');
   const [completed, setCompleted] = useState(false);
-  const [leaderboard, setLeaderboard] = useState<{name: string, date: string}[]>([]);
 
-  // 365 words for each day (truncated for brevity in actual code, but theoretically mapped to day of year)
-  const challengeWords = ["wellness", "balance", "kindness", "focus", "clarity", "resilience", "growth", "harmony", "strength", "wisdom"]; // Imagine 365 items
+  const challengeWords = ["wellness", "balance", "kindness", "focus", "clarity", "resilience", "growth", "harmony", "strength", "wisdom"];
   const today = new Date();
   const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 86400000);
   const dailyWord = challengeWords[dayOfYear % challengeWords.length].toLowerCase();
 
   useEffect(() => {
-    const saved = localStorage.getItem('sm_leaderboard_word');
-    if (saved) setLeaderboard(JSON.parse(saved));
     const doneToday = localStorage.getItem(`sm_word_done_${dayOfYear}`);
     if (doneToday) setCompleted(true);
   }, [dayOfYear]);
@@ -26,12 +29,9 @@ export const WordChallenge = ({ onClose, playerName }: { onClose: () => void; pl
     if (guess.toLowerCase() === dailyWord) {
       setCompleted(true);
       localStorage.setItem(`sm_word_done_${dayOfYear}`, 'true');
-      const name = playerName || "Scholar";
-      {
-        const updated = [{ name, date: today.toLocaleDateString() }, ...leaderboard].slice(0, 10);
-        setLeaderboard(updated);
-        localStorage.setItem('sm_leaderboard_word', JSON.stringify(updated));
-      }
+      // Score = total completions; App will increment by updating if new > existing
+      const currentScore = leaderboard.find(e => e.name === (playerName || 'Scholar'))?.score ?? 0;
+      onSaveScore?.(currentScore + 1);
     } else {
       alert("Not quite! Think positive wellness vibe.");
     }
@@ -56,7 +56,7 @@ export const WordChallenge = ({ onClose, playerName }: { onClose: () => void; pl
                 {leaderboard.map((e, i) => (
                   <div key={i} className="flex justify-between text-[10px] font-black uppercase border-b border-slate-100 py-2.5">
                     <span className="truncate mr-2">{e.name}</span>
-                    <span className="text-slate-400 shrink-0">{e.date}</span>
+                    <span className="text-slate-400 shrink-0">{e.score} solved</span>
                   </div>
                 ))}
               </div>

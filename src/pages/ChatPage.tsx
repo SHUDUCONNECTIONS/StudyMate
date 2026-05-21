@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Lock, PhoneCall, Smile, Shield, CheckCircle2, Send, Flag, AlertTriangle } from 'lucide-react';
+import { PhoneCall, Smile, Shield, CheckCircle2, Send, Flag, AlertTriangle } from 'lucide-react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { User, Message, Booking } from '../types';
@@ -66,20 +66,51 @@ export const ChatPage = ({
     }
   };
 
+  const counterpart = session
+    ? users.find(u => u.id === (user.role === 'learner' ? session.counsellorId : session.learnerId))
+    : null;
+  const isAnonymousView = session?.anonymous && user.role === 'counsellor';
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full max-w-4xl mx-auto flex flex-col">
       <div className="flex items-center justify-between mb-4 md:mb-6 shrink-0 gap-2 md:gap-4 px-1">
-        <div className="flex items-center gap-2 md:gap-3 min-w-0">
-          <div className="w-8 h-8 md:w-12 md:h-12 bg-sky-900 text-white rounded-lg md:rounded-2xl flex items-center justify-center shrink-0 border-2 border-black">
-            <Lock size={14} className="text-sky-400" />
+        <div className="flex items-center gap-3 md:gap-4 min-w-0">
+          {/* Avatar */}
+          <div className="shrink-0 relative">
+            {isAnonymousView ? (
+              <div className="w-10 h-10 md:w-14 md:h-14 bg-brand-dark rounded-xl md:rounded-2xl border-2 border-black flex items-center justify-center shadow-[3px_3px_0px_0px_#000]">
+                <Shield size={18} className="text-white/60" />
+              </div>
+            ) : session ? (
+              <img
+                src={counterpart?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=Yandasm`}
+                className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl border-2 border-black shadow-[3px_3px_0px_0px_#000] object-cover"
+                alt=""
+              />
+            ) : (
+              <img
+                src="https://api.dicebear.com/7.x/bottts/svg?seed=Yandasm"
+                className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl border-2 border-black shadow-[3px_3px_0px_0px_#000]"
+                alt=""
+              />
+            )}
+            <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full" />
           </div>
+
+          {/* Name + status */}
           <div className="min-w-0">
-            <h2 className="text-sm md:text-2xl font-display font-black text-sky-950 uppercase tracking-tighter truncate italic leading-none">
-              {(session as any)?.time === 'Most Trusted Chat' ? 'Direct Support' : (session?.anonymous ? 'Private' : 'Room')}
+            <h2 className="text-sm md:text-xl font-display font-black text-brand-dark uppercase tracking-tighter truncate italic leading-none">
+              {isAnonymousView
+                ? 'Anonymous Learner'
+                : session
+                  ? (counterpart?.name || 'Unknown')
+                  : 'Yandasm AI'}
             </h2>
-            <div className="flex items-center gap-1 mt-0.5">
-              <p className="text-[7px] md:text-xs font-black text-brand-orange uppercase tracking-widest truncate">Secure sanctuary</p>
-            </div>
+            <p className="text-[8px] md:text-[10px] font-black text-brand-orange uppercase tracking-widest mt-0.5 truncate">
+              {session
+                ? ((session as any).time === 'Most Trusted Chat' ? 'Direct chat • Secure' : `Session • ${session.anonymous ? 'Anonymous' : 'Identified'}`)
+                : 'AI wellness assistant'}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-1.5 md:gap-2">

@@ -5,28 +5,25 @@ import { Smile, Zap, Trophy, Brain } from 'lucide-react';
 
 interface GameItem { id: number; x: number; y: number; vx: number; vy: number; type: 'vibe' | 'stress'; word: string; sliced: boolean; }
 
-export const ZenSlasher = ({ onClose, playerName }: { onClose: () => void; playerName?: string }) => {
+export const ZenSlasher = ({
+  onClose, playerName, leaderboard = [], onSaveScore,
+}: {
+  onClose: () => void;
+  playerName?: string;
+  leaderboard?: { name: string; score: number }[];
+  onSaveScore?: (score: number) => void;
+}) => {
   const [score, setScore] = useState(0);
   const [items, setItems] = useState<GameItem[]>([]);
   const [isGameOver, setIsGameOver] = useState(false);
   const [trail, setTrail] = useState<{ x: number, y: number, id: number }[]>([]);
-  const [leaderboard, setLeaderboard] = useState<{ name: string, score: number }[]>([]);
   const gameRef = useRef<HTMLDivElement>(null);
 
   const vibes = ["Joy", "Peace", "Love", "Zen", "Calm", "Hope", "Kind"];
   const stressors = ["Stress", "Burnout", "Worry", "Fear", "Doubt", "Anger"];
 
-  useEffect(() => {
-    const saved = localStorage.getItem('sm_leaderboard_zen');
-    if (saved) setLeaderboard(JSON.parse(saved));
-  }, []);
-
   const saveToLeaderboard = (finalScore: number) => {
-    const name = playerName || "Player";
-    const newEntry = { name, score: finalScore };
-    const updated = [...leaderboard, newEntry].sort((a, b) => b.score - a.score).slice(0, 5);
-    setLeaderboard(updated);
-    localStorage.setItem('sm_leaderboard_zen', JSON.stringify(updated));
+    onSaveScore?.(finalScore);
   };
 
   useEffect(() => {

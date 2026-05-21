@@ -101,7 +101,7 @@ export const SessionsPage = ({ user, users, bookings, onJoinSession }: SessionsP
           {DAYS.map(day => (
             <div
               key={day}
-              className={`p-4 text-center border-r-2 border-white/10 last:border-r-0 ${day === todayName ? 'bg-brand-teal/30' : ''}`}
+              className={`p-4 text-center border-r border-white/20 last:border-r-0 ${day === todayName ? 'bg-brand-teal/30' : ''}`}
             >
               <span className={`text-[10px] font-black uppercase tracking-widest ${day === todayName ? 'text-brand-yellow' : 'text-white/60'}`}>
                 {day.substring(0, 3)}
@@ -116,7 +116,7 @@ export const SessionsPage = ({ user, users, bookings, onJoinSession }: SessionsP
         {/* Time rows */}
         <div className="overflow-y-auto max-h-[560px] no-scrollbar">
           {TIMES.map(time => (
-            <div key={time} className="grid grid-cols-8 border-b border-slate-100 last:border-b-0">
+            <div key={time} className="grid grid-cols-8 border-b border-slate-200 last:border-b-0">
               <div className="p-3 flex items-center justify-center border-r border-slate-100 bg-slate-50/60">
                 <span className="text-[10px] font-black text-slate-400 tabular-nums">{time}</span>
               </div>
@@ -127,7 +127,7 @@ export const SessionsPage = ({ user, users, bookings, onJoinSession }: SessionsP
                 return (
                   <div
                     key={day}
-                    className={`p-1.5 border-r border-slate-100 last:border-r-0 min-h-[60px] flex items-center justify-center ${isToday ? 'bg-brand-teal/5' : ''}`}
+                    className={`p-1.5 border-r border-slate-200 last:border-r-0 min-h-[60px] flex items-center justify-center ${isToday ? 'bg-brand-teal/5' : ''}`}
                   >
                     {session ? (
                       <button

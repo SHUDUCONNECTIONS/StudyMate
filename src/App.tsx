@@ -66,6 +66,9 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [showGame, setShowGame] = useState(false);
   const [activeGame, setActiveGame] = useState<string | null>(null);
+  const [zenLeaderboard,  setZenLeaderboard]  = useState<{ name: string; score: number }[]>([]);
+  const [zipLeaderboard,  setZipLeaderboard]  = useState<{ name: string; score: number }[]>([]);
+  const [wordLeaderboard, setWordLeaderboard] = useState<{ name: string; score: number }[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
@@ -121,6 +124,20 @@ function App() {
     });
     return unsubscribe;
   }, [currentUser?.id]);
+
+  // --- GLOBAL GAME LEADERBOARDS ---
+  useEffect(() => {
+    const mkListener = (game: string, setter: (v: { name: string; score: number }[]) => void) =>
+      onSnapshot(
+        query(collection(db, 'scores'), where('game', '==', game), orderBy('score', 'desc')),
+        snap => setter(snap.docs.map(d => ({ name: d.data().name as string, score: d.data().score as number }))),
+        () => {} // ignore permission errors silently
+      );
+    const u1 = mkListener('zen',  setZenLeaderboard);
+    const u2 = mkListener('zip',  setZipLeaderboard);
+    const u3 = mkListener('word', setWordLeaderboard);
+    return () => { u1(); u2(); u3(); };
+  }, []);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -577,6 +594,21 @@ function App() {
     }
   };
 
+  const handleSaveScore = async (game: 'zen' | 'zip' | 'word', score: number) => {
+    if (!currentUser) return;
+    const docRef = doc(db, 'scores', `${currentUser.id}_${game}`);
+    const existing = await getDoc(docRef);
+    if (!existing.exists() || (existing.data().score as number) < score) {
+      await setDoc(docRef, {
+        userId: currentUser.id,
+        name: currentUser.name,
+        game,
+        score,
+        updatedAt: serverTimestamp(),
+      });
+    }
+  };
+
   const handleReport = async (sessionId: string, reason: string, details: string) => {
     if (!currentUser) return;
     const adminSnap = await getDocs(query(collection(db, 'users'), where('role', '==', 'admin')));
@@ -760,9 +792,9 @@ function App() {
               </div>
             </div>
           )}
-          {activeGame === 'zen' && <ZenSlasher onClose={() => { setActiveGame(null); setShowGame(false); }} playerName={currentUser?.name} />}
-          {activeGame === 'zip' && <ZipQuest onClose={() => { setActiveGame(null); setShowGame(false); }} playerName={currentUser?.name} />}
-          {activeGame === 'word' && <WordChallenge onClose={() => { setActiveGame(null); setShowGame(false); }} playerName={currentUser?.name} />}
+          {activeGame === 'zen'  && <ZenSlasher   onClose={() => { setActiveGame(null); setShowGame(false); }} playerName={currentUser?.name} leaderboard={zenLeaderboard}  onSaveScore={s => handleSaveScore('zen',  s)} />}
+          {activeGame === 'zip'  && <ZipQuest     onClose={() => { setActiveGame(null); setShowGame(false); }} playerName={currentUser?.name} leaderboard={zipLeaderboard}  onSaveScore={s => handleSaveScore('zip',  s)} />}
+          {activeGame === 'word' && <WordChallenge onClose={() => { setActiveGame(null); setShowGame(false); }} playerName={currentUser?.name} leaderboard={wordLeaderboard} onSaveScore={s => handleSaveScore('word', s)} />}
         </div>
       )}
 

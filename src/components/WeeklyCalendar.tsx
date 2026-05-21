@@ -21,33 +21,33 @@ export const WeeklyCalendar = ({
   const times = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
 
   return (
-    <div className="w-full bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-2xl shadow-slate-200/40">
-      <div className="grid grid-cols-8 border-b border-slate-50 bg-slate-50/50">
-        <div className="p-4 border-r border-slate-50" />
+    <div className="w-full bg-white rounded-[2.5rem] border-2 border-slate-200 overflow-hidden shadow-2xl shadow-slate-200/40">
+      <div className="grid grid-cols-8 border-b-2 border-slate-200 bg-slate-50">
+        <div className="p-4 border-r-2 border-slate-200" />
         {days.map(day => (
-          <div key={day} className="p-4 text-center border-r border-slate-50 last:border-r-0">
-            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{day.substring(0, 3)}</span>
+          <div key={day} className="p-4 text-center border-r-2 border-slate-200 last:border-r-0">
+            <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">{day.substring(0, 3)}</span>
           </div>
         ))}
       </div>
       <div className="max-h-[450px] overflow-y-auto no-scrollbar">
         {times.map(time => (
-          <div key={time} className="grid grid-cols-8 border-b border-slate-100 last:border-b-0 group">
-            <div className="p-4 flex items-center justify-center border-r border-slate-50 bg-slate-50/20">
-              <span className="text-[10px] font-black text-slate-400 whitespace-nowrap">{time}</span>
+          <div key={time} className="grid grid-cols-8 border-b border-slate-200 last:border-b-0 group">
+            <div className="p-4 flex items-center justify-center border-r-2 border-slate-200 bg-slate-50">
+              <span className="text-[10px] font-black text-slate-500 whitespace-nowrap">{time}</span>
             </div>
             {days.map(day => {
               const slot = `${day} ${time}`;
               const isAvailable = availableSlots.includes(slot);
               const isBooked = bookings.some((b: any) => b.time === slot && b.status === 'upcoming');
-              
+
               if (mode === 'manage') {
                 return (
                   <button
                     key={day}
                     onClick={() => onToggleSlot?.(slot)}
-                    className={`p-2 border-r border-slate-100 last:border-r-0 min-h-[60px] transition-all flex items-center justify-center group/cell ${
-                      isAvailable ? 'bg-sky-50' : 'hover:bg-slate-50/50'
+                    className={`p-2 border-r border-slate-200 last:border-r-0 min-h-[60px] transition-all flex items-center justify-center group/cell ${
+                      isAvailable ? 'bg-sky-50' : 'hover:bg-slate-50'
                     }`}
                   >
                     {isAvailable ? (
@@ -62,7 +62,7 @@ export const WeeklyCalendar = ({
               }
 
               return (
-                <div key={day} className="p-2 border-r border-slate-100 last:border-r-0 min-h-[60px] flex items-center justify-center">
+                <div key={day} className="p-2 border-r border-slate-200 last:border-r-0 min-h-[60px] flex items-center justify-center">
                   {isBooked ? (
                     <div className="w-full h-full bg-slate-50 rounded-xl flex items-center justify-center text-slate-300">
                       <Lock size={12} />
