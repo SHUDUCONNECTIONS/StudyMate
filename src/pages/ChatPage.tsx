@@ -91,11 +91,21 @@ export const ChatPage = ({
           
           <AnimatePresence>
             {messages.map((msg: any, idx: number) => {
+              if (msg.role === 'system') {
+                return (
+                  <div key={msg.id || idx} className="flex justify-center">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-red-400 bg-red-50 border border-red-200 px-4 py-2 rounded-full">
+                      {msg.content}
+                    </span>
+                  </div>
+                );
+              }
+
               const belongsToMe = msg.senderId === user.id || (msg.role === 'user' && !session);
               const sender = users.find((u: any) => u.id === msg.senderId);
-              
+
               return (
-                <motion.div 
+                <motion.div
                   key={msg.id || idx}
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}

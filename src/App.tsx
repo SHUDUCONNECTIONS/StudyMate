@@ -147,6 +147,15 @@ function App() {
       query(collection(db, 'chats', activeSession.id, 'messages'), orderBy('timestamp', 'asc')),
       (snapshot) => {
         setMessages(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Message)));
+      },
+      (error) => {
+        console.error('Chat listener error:', error);
+        setMessages([{
+          role: 'system',
+          content: 'Unable to load messages. Please check your connection or contact support.',
+          id: 'listen-err',
+          timestamp: Date.now(),
+        }]);
       }
     );
     return unsubscribe;
@@ -496,10 +505,14 @@ function App() {
     );
   };
 
-  const startDirectChat = async (counsellorId: string) => {
+  const startDirectChat = async (otherUserId: string) => {
     if (!currentUser) return;
+    // Resolve correct learnerId/counsellorId regardless of which role calls this
+    const learnerId  = currentUser.role === 'learner' ? currentUser.id : otherUserId;
+    const counsellorId = currentUser.role === 'learner' ? otherUserId : currentUser.id;
+
     const existing = bookings.find(
-      b => b.learnerId === currentUser.id && b.counsellorId === counsellorId && b.time === 'Most Trusted Chat' && b.status === 'upcoming'
+      b => b.learnerId === learnerId && b.counsellorId === counsellorId && b.time === 'Most Trusted Chat' && b.status === 'upcoming'
     );
 
     if (existing) {
@@ -509,7 +522,7 @@ function App() {
       const bookingRef = doc(collection(db, 'bookings'));
       const newBooking: Booking = {
         id: bookingRef.id,
-        learnerId: currentUser.id,
+        learnerId,
         counsellorId,
         time: 'Most Trusted Chat',
         status: 'upcoming',
@@ -518,7 +531,8 @@ function App() {
       await setDoc(bookingRef, newBooking);
       setActiveSession(newBooking);
       navigate('/chat');
-      await addNotification(counsellorId, 'Direct Chat Started', `${currentUser.name} (Member who trusts you) has started a direct chat.`, 'booking');
+      const notifyId = currentUser.role === 'learner' ? counsellorId : learnerId;
+      await addNotification(notifyId, 'Direct Chat Started', `${currentUser.name} has started a direct chat.`, 'booking');
     }
   };
 
@@ -534,7 +548,17 @@ function App() {
     setChatInput('');
 
     if (activeSession) {
-      await addDoc(collection(db, 'chats', activeSession.id, 'messages'), userMsg);
+      try {
+        await addDoc(collection(db, 'chats', activeSession.id, 'messages'), userMsg);
+      } catch (err: any) {
+        console.error('Message send failed:', err);
+        setMessages(prev => [...prev, {
+          role: 'system',
+          content: 'Message failed to send. Please try again.',
+          id: 'send-err-' + Date.now(),
+          timestamp: Date.now(),
+        }]);
+      }
     } else {
       setMessages(prev => [...prev, userMsg]);
       setIsLoading(true);
