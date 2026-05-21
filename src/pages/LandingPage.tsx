@@ -3,6 +3,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { ArrowRight, Star } from 'lucide-react';
 import { YandasmLogo } from '../components/YandasmLogo';
+import landingImage from '../assets/images/landing_cartoon_vibe_1779177918990.png';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -96,7 +97,7 @@ export const LandingPage = ({ onGetStarted }: LandingPageProps) => {
         >
           <div className="yandasm-pop-card p-4 bg-white border-4 border-black rotate-3 shadow-[12px_12px_0px_0px_#FFD23F] group">
              <img 
-               src="/src/assets/images/landing_cartoon_vibe_1779177918990.png" 
+               src={landingImage}
                className="w-full h-[550px] object-cover rounded-[2rem] border-2 border-black" 
                alt="Student Wellness Vibe"
              />
