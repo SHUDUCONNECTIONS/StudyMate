@@ -137,6 +137,8 @@ function App() {
     return () => { u1(); u2(); u3(); };
   }, []);
 
+  const prevUnreadRef = useRef<number | null>(null);
+
   useEffect(() => {
     if (!currentUser) return;
     const q = query(collection(db, 'notifications'), where('userId', '==', currentUser.id));
@@ -149,7 +151,16 @@ function App() {
           timestamp: data.timestamp?.toDate ? data.timestamp.toDate() : new Date(),
         } as Notification;
       });
-      setNotifications(notifs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()));
+      const sorted = notifs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+      const unreadCount = sorted.filter(n => !n.read).length;
+
+      // Play sound + vibrate only when genuinely new notifications arrive (not on initial load)
+      if (prevUnreadRef.current !== null && unreadCount > prevUnreadRef.current) {
+        playNotificationSound();
+        if ('vibrate' in navigator) navigator.vibrate([200, 80, 200, 80, 100]);
+      }
+      prevUnreadRef.current = unreadCount;
+      setNotifications(sorted);
     });
     return unsubscribe;
   }, [currentUser?.id]);
@@ -183,12 +194,66 @@ function App() {
   }, [messages, isLoading]);
 
   // --- ACTIONS ---
-  const addNotification = async (userId: string, title: string, message: string, type: 'booking' | 'registration' | 'info') => {
+
+  // Funky ascending-arpeggio notification sound using the Web Audio API
+  const playNotificationSound = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      // C-E-G-C major arpeggio with a square wave for that funky feel
+      [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+        const osc  = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'square';
+        osc.frequency.value = freq;
+        const t = ctx.currentTime + i * 0.09;
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.1, t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+        osc.start(t);
+        osc.stop(t + 0.22);
+      });
+    } catch {}
+  };
+
+  // Write to Firestore `mail` collection — picked up by the
+  // "Trigger Email from Firestore" Firebase Extension to send a real email.
+  const sendEmailNotification = (toEmail: string, toName: string, subject: string, body: string) => {
+    addDoc(collection(db, 'mail'), {
+      to: toEmail,
+      message: {
+        subject: `Yandasm: ${subject}`,
+        html: `
+          <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+            <div style="background:#1A1A1A;padding:20px 24px;border-radius:12px;margin-bottom:24px;">
+              <h1 style="color:#FFD23F;margin:0;font-size:22px;letter-spacing:-0.5px;">YANDASM</h1>
+              <p style="color:rgba(255,255,255,0.5);margin:4px 0 0;font-size:10px;text-transform:uppercase;letter-spacing:0.2em;">Counselling & Wellness</p>
+            </div>
+            <h2 style="color:#1A1A1A;font-size:18px;margin-bottom:8px;">${subject}</h2>
+            <p style="color:#555;font-size:14px;line-height:1.7;">Hi ${toName},</p>
+            <p style="color:#555;font-size:14px;line-height:1.7;">${body}</p>
+            <div style="background:#f4f4f4;border-radius:10px;padding:14px 16px;margin-top:24px;">
+              <p style="color:#999;font-size:11px;margin:0;">Automated message from Yandasm. Log in to view or respond.</p>
+            </div>
+          </div>`,
+      },
+    }).catch(() => {}); // silent fail if extension not installed
+  };
+
+  const addNotification = async (userId: string, title: string, message: string, type: 'booking' | 'registration' | 'info' | 'report') => {
     await addDoc(collection(db, 'notifications'), {
       userId, title, message, type,
       timestamp: serverTimestamp(),
       read: false,
     });
+    // Send email to the recipient
+    const recipient = users.find(u => u.id === userId);
+    if (recipient?.email) {
+      sendEmailNotification(recipient.email, recipient.name, title, message);
+    }
   };
 
   const markAllAsRead = async (userId: string) => {
