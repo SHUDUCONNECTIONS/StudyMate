@@ -6,26 +6,14 @@ import {
   ChevronLeft, AlertCircle, CheckCircle2, Shield, User as UserIcon, ChevronRight
 } from 'lucide-react';
 import { YandasmLogo } from '../components/YandasmLogo';
-import { UserRole } from '../types';
-
-interface PopiaData {
-  id_or_dob: string;
-  guardianName: string;
-  guardianRelationship: string;
-  guardianContact: string;
-  guardianEmail: string;
-  popiaConsent: boolean;
-  popiaSignature: string;
-  popiaDate: string;
-  popiaLocation: string;
-}
+import { UserRole, PopiaData } from '../types';
 
 interface AuthPageProps {
   onLogin: (email: string, pass: string) => Promise<string | null>;
   onRegister: (
-    name: string, email: string, pass: string, role: UserRole, 
-    specialty: string, department: string, year: number, 
-    qualifications: string, gender: string, avatarSeed: string, 
+    name: string, email: string, pass: string, role: UserRole,
+    specialty: string, department: string, year: number,
+    qualifications: string, gender: string, avatarSeed: string,
     cvFileName: string, profilePhoto: string, finalPopia?: PopiaData
   ) => Promise<string | null>;
   onBack: () => void;
@@ -53,10 +41,13 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
 
   const [popiaData, setPopiaData] = useState<PopiaData>({
     id_or_dob: '',
+    isForeign: false,
+    passportNo: '',
     guardianName: '',
     guardianRelationship: '',
     guardianContact: '',
     guardianEmail: '',
+    guardianPassportNo: '',
     popiaConsent: false,
     popiaSignature: '',
     popiaDate: new Date().toISOString().split('T')[0],
@@ -276,6 +267,10 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
                       setError('Please fill in all basic details.');
                       return;
                     }
+                    if (formData.password.length < 6) {
+                      setError('Password must be at least 6 characters.');
+                      return;
+                    }
                     if (formData.role === 'admin') {
                       const err = await onRegister(formData.name, formData.email, formData.password, formData.role, formData.specialty, formData.department, formData.year, formData.qualifications, formData.gender, formData.avatarSeed, formData.cvFileName, formData.profilePhoto);
                       if (err) setError(err);
@@ -297,11 +292,27 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
               </div>
               
               <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-2 px-1">Identity Verification</p>
-              <input 
-                type="text" placeholder="ID Number or DOB (YYYY-MM-DD)" 
+              <label className="flex items-center gap-3 cursor-pointer group mb-3 px-1">
+                <input
+                  type="checkbox"
+                  className="w-5 h-5 rounded-lg border-2 border-sky-400 text-sky-600 focus:ring-sky-600 cursor-pointer"
+                  checked={popiaData.isForeign}
+                  onChange={e => setPopiaData({...popiaData, isForeign: e.target.checked})}
+                />
+                <span className="text-[10px] font-black uppercase text-slate-500 group-hover:text-brand-dark transition-all tracking-widest">Foreign National (Passport Holder)</span>
+              </label>
+              <input
+                type="text" placeholder="SA ID Number or DOB (YYYY-MM-DD)"
                 className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 text-sm font-bold focus:border-sky-600 outline-none"
                 value={popiaData.id_or_dob} onChange={e => setPopiaData({...popiaData, id_or_dob: e.target.value})}
               />
+              {popiaData.isForeign && (
+                <input
+                  type="text" placeholder="Learner Passport Number"
+                  className="w-full h-12 bg-sky-50 border-2 border-sky-200 rounded-xl px-4 text-sm font-bold focus:border-sky-600 outline-none mt-3"
+                  value={popiaData.passportNo} onChange={e => setPopiaData({...popiaData, passportNo: e.target.value})}
+                />
+              )}
 
               <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest mt-6 mb-2 px-1">Parent / Legal Guardian (If Minor) or Self Details</p>
               <div className="space-y-3 p-1">
@@ -325,11 +336,18 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
                   className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 text-sm font-bold focus:border-sky-600 outline-none"
                   value={popiaData.guardianContact} onChange={e => setPopiaData({...popiaData, guardianContact: e.target.value})}
                 />
-                <input 
-                  type="email" placeholder="Guardian Email Address" 
+                <input
+                  type="email" placeholder="Guardian Email Address"
                   className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 text-sm font-bold focus:border-sky-600 outline-none"
                   value={popiaData.guardianEmail} onChange={e => setPopiaData({...popiaData, guardianEmail: e.target.value})}
                 />
+                {popiaData.isForeign && (
+                  <input
+                    type="text" placeholder="Guardian Passport Number"
+                    className="w-full h-12 bg-sky-50 border-2 border-sky-200 rounded-xl px-4 text-sm font-bold focus:border-sky-600 outline-none"
+                    value={popiaData.guardianPassportNo} onChange={e => setPopiaData({...popiaData, guardianPassportNo: e.target.value})}
+                  />
+                )}
               </div>
 
               <div className="bg-brand-lavender/10 p-5 rounded-2xl border-2 border-brand-lavender/20 mt-6">

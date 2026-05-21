@@ -15,10 +15,13 @@ export interface Notification {
 
 export interface PopiaData {
   id_or_dob: string;
+  isForeign?: boolean;
+  passportNo?: string;
   guardianName: string;
   guardianRelationship: string;
   guardianContact: string;
   guardianEmail: string;
+  guardianPassportNo?: string;
   popiaConsent: boolean;
   popiaSignature: string;
   popiaDate: string;

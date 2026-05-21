@@ -18,7 +18,7 @@ import {
   onAuthStateChanged,
 } from 'firebase/auth';
 import {
-  collection, doc, setDoc, getDoc, updateDoc, addDoc,
+  collection, doc, setDoc, getDoc, getDocs, updateDoc, addDoc,
   onSnapshot, query, where, orderBy, writeBatch, serverTimestamp,
 } from 'firebase/firestore';
 
@@ -105,18 +105,20 @@ function App() {
 
   // --- REAL-TIME DATA ---
   useEffect(() => {
+    if (!currentUser) return;
     const unsubscribe = onSnapshot(collection(db, 'users'), (snapshot) => {
       setUsers(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as User)));
     });
     return unsubscribe;
-  }, []);
+  }, [currentUser?.id]);
 
   useEffect(() => {
+    if (!currentUser) return;
     const unsubscribe = onSnapshot(collection(db, 'bookings'), (snapshot) => {
       setBookings(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Booking)));
     });
     return unsubscribe;
-  }, []);
+  }, [currentUser?.id]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -188,6 +190,7 @@ function App() {
     const learnerData = [
       ['Full Name', student.name],
       ['Identity/DOB', student.id_or_dob || 'N/A'],
+      ...(student.isForeign ? [['Passport Number', student.passportNo || 'N/A']] : []),
       ['School', student.department || 'N/A'],
       ['Grade', `Grade ${student.year}`],
       ['Email', student.email],
@@ -210,6 +213,7 @@ function App() {
       ['Relationship', student.guardianRelationship || 'N/A'],
       ['Contact Number', student.guardianContact || 'N/A'],
       ['Guardian Email', student.guardianEmail || 'N/A'],
+      ...(student.isForeign ? [['Guardian Passport', student.guardianPassportNo || 'N/A']] : []),
     ];
 
     autoTable(doc, {
@@ -262,30 +266,35 @@ function App() {
       const credential = await createUserWithEmailAndPassword(auth, email, password);
       const uid = credential.user.uid;
 
-      const newUser: Omit<User, 'password'> = {
+      // Build user object then strip undefined values — Firestore rejects undefined fields
+      const rawUser = {
         id: uid,
         name,
         email,
         role,
         avatar: profilePhoto || `https://api.dicebear.com/7.x/notionists/svg?seed=${avatarSeed || name}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`,
         avatarSeed: avatarSeed || name,
-        gender,
-        status: role === 'counsellor' ? 'pending' : undefined,
-        specialty,
-        department,
-        year,
-        qualifications,
-        cvFileName,
-        profilePhoto,
-        ...popiaData,
-        popiaConsent: role === 'admin' ? true : popiaData?.popiaConsent,
+        gender: gender || 'other',
+        ...(role === 'counsellor' && { status: 'pending' as const }),
+        ...(specialty && { specialty }),
+        ...(department && { department }),
+        ...(year !== undefined && { year }),
+        ...(qualifications && { qualifications }),
+        ...(cvFileName && { cvFileName }),
+        ...(profilePhoto && { profilePhoto }),
+        ...(popiaData && { ...popiaData }),
+        popiaConsent: role === 'admin' ? true : (popiaData?.popiaConsent ?? false),
       };
 
-      await setDoc(doc(db, 'users', uid), newUser);
+      await setDoc(doc(db, 'users', uid), rawUser);
+      // Set currentUser immediately — avoids race where onAuthStateChanged fires before
+      // setDoc completes and getDoc finds no document, leaving the user stuck.
+      setCurrentUser(rawUser as unknown as User);
 
       if (role === 'counsellor') {
-        users.filter(u => u.role === 'admin').forEach(admin => {
-          addNotification(admin.id, 'New registration', `${name} is awaiting approval.`, 'registration');
+        const adminSnap = await getDocs(query(collection(db, 'users'), where('role', '==', 'admin')));
+        adminSnap.forEach(d => {
+          addNotification(d.id, 'New registration', `${name} is awaiting approval.`, 'registration');
         });
       }
 

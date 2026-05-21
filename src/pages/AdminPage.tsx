@@ -219,6 +219,9 @@ export const AdminPage = ({ users, onApprove, onAddCounsellor, bookings, message
                           <div className="p-4 bg-slate-50 rounded-2xl border-2 border-slate-100">
                              <p className="font-bold text-slate-800">{selectedStudent.name}</p>
                              <p className="text-xs font-bold text-slate-400 mt-1">ID/DOB: {selectedStudent.id_or_dob || 'N/A'}</p>
+                             {(selectedStudent as any).isForeign && (
+                               <p className="text-xs font-bold text-sky-500 mt-1">Passport: {(selectedStudent as any).passportNo || 'N/A'}</p>
+                             )}
                              <p className="text-xs font-bold text-slate-400">Email: {selectedStudent.email}</p>
                           </div>
                        </div>
@@ -233,6 +236,9 @@ export const AdminPage = ({ users, onApprove, onAddCounsellor, bookings, message
                              <div className="mt-1 flex items-center gap-2 text-xs font-bold text-emerald-700">
                                 <Mail size={12} /> {selectedStudent.guardianEmail}
                              </div>
+                             {(selectedStudent as any).isForeign && (selectedStudent as any).guardianPassportNo && (
+                               <p className="text-xs font-bold text-sky-500 mt-2">Passport: {(selectedStudent as any).guardianPassportNo}</p>
+                             )}
                           </div>
                        </div>
                     </div>
