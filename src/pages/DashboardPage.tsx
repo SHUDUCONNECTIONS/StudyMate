@@ -1,7 +1,7 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Calendar, Heart, MessageSquare, Clock, Shield, Star, Sparkles, PhoneCall, Check, X, Plus } from 'lucide-react';
+import { Calendar, Heart, MessageSquare, Clock, Shield, Star, Sparkles, PhoneCall, Check, X, Plus, Wind } from 'lucide-react';
 import { User, Booking, Notification } from '../types';
 import { MoodRain } from '../components/MoodRain';
 import { WeeklyCalendar } from '../components/WeeklyCalendar';
@@ -120,6 +120,52 @@ export const DashboardPage = ({
   const [selectedCounsellor, setSelectedCounsellor] = useState<User | null>(null);
   const [search, setSearch] = useState('');
   const [isManagingAvailability, setIsManagingAvailability] = useState(false);
+
+  // --- BREATHING EXERCISE ---
+  const BREATH_PHASES = [
+    { label: 'BREATHE IN',  duration: 4, color: 'bg-sky-400',      ring: 'border-sky-400',      text: 'text-sky-300',      large: true  },
+    { label: 'HOLD',        duration: 4, color: 'bg-brand-yellow',  ring: 'border-brand-yellow', text: 'text-brand-yellow', large: true  },
+    { label: 'BREATHE OUT', duration: 4, color: 'bg-brand-teal',    ring: 'border-brand-teal',   text: 'text-brand-teal',   large: false },
+    { label: 'HOLD',        duration: 4, color: 'bg-brand-lavender',ring: 'border-purple-400',   text: 'text-purple-300',   large: false },
+  ] as const;
+  const TOTAL_ROUNDS = 4;
+  const [breathing, setBreathing] = useState(false);
+  const [breathDone, setBreathDone] = useState(false);
+  const [bPhase, setBPhase] = useState(0);
+  const [bCount, setBCount] = useState(4);
+  const [bRound, setBRound] = useState(1);
+
+  useEffect(() => {
+    if (!breathing) return;
+    const id = setInterval(() => {
+      setBCount(prev => {
+        if (prev > 1) return prev - 1;
+        // advance phase
+        setBPhase(p => {
+          const next = (p + 1) % 4;
+          if (next === 0) {
+            setBRound(r => {
+              if (r >= TOTAL_ROUNDS) {
+                setBreathing(false);
+                setBreathDone(true);
+                return r;
+              }
+              return r + 1;
+            });
+          }
+          return next;
+        });
+        return 4;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [breathing]);
+
+  const startBreathing = () => {
+    setBPhase(0); setBCount(4); setBRound(1);
+    setBreathDone(false); setBreathing(true);
+  };
+  const stopBreathing = () => { setBreathing(false); setBPhase(0); setBCount(4); setBRound(1); };
 
   const userBookings = useMemo(() => bookings.filter((b: any) => user.role === 'learner' ? b.learnerId === user.id : b.counsellorId === user.id), [bookings, user]);
 
@@ -288,7 +334,7 @@ export const DashboardPage = ({
                         <div 
                           key={period} 
                           title={`${day.date} - ${period}`}
-                          className={`h-10 w-full rounded-lg border border-black/10 flex items-center justify-center text-xl shadow-sm transition-all ${mood ? 'bg-white' : 'bg-slate-50/50 grayscale opacity-20'}`}
+                          className={`h-10 w-full rounded-lg border-2 flex items-center justify-center text-xl shadow-sm transition-all ${mood ? 'bg-white border-slate-300' : 'bg-slate-50 border-slate-200 opacity-40'}`}
                         >
                           {mood ? mood.title.split(': ')[1] : ''}
                         </div>
@@ -422,30 +468,99 @@ export const DashboardPage = ({
         </div>
 
         <div className="md:col-span-4 space-y-8">
-          <motion.div 
-            whileHover={{ scale: 1.02, rotate: 1 }}
-            className="yandasm-pop-card bg-brand-orange text-white min-h-[320px] flex flex-col justify-between overflow-hidden relative p-8 border-4 border-black"
-          >
-            <Sparkles className="absolute -right-8 -bottom-8 w-48 h-48 text-white/10 animate-pulse" strokeWidth={1} />
-            <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-6">
-                <div className="w-12 h-12 bg-white border-2 border-black rounded-2xl flex items-center justify-center rotate-6 shadow-[3px_3px_0px_0px_#000]">
-                  <Heart size={24} className="text-brand-orange fill-brand-orange animate-wiggle" />
-                </div>
-                <p className="text-[10px] font-black uppercase text-white tracking-[0.2em] bg-black/20 px-3 py-1 rounded-full border border-white/20">Deep Breath</p>
+          <div className="yandasm-pop-card bg-brand-dark text-white flex flex-col overflow-hidden relative border-4 border-black min-h-[340px]">
+            <Sparkles className="absolute -right-8 -top-8 w-40 h-40 text-white/5" strokeWidth={1} />
+
+            {/* Header */}
+            <div className="flex items-center gap-3 p-6 pb-0 relative z-10">
+              <div className="w-10 h-10 bg-white/10 border border-white/20 rounded-2xl flex items-center justify-center">
+                <Wind size={18} className="text-sky-300" />
               </div>
-              <h4 className="text-4xl font-display font-black leading-tight tracking-tighter uppercase italic text-black text-pop-outline">Vibe Check</h4>
-              <p className="text-sm font-bold text-white mt-6 leading-relaxed">
-                "Take a moment. You're doing better than you think. Let's do a 5-second reset together."
-              </p>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-white/50">Deep Breathing</p>
+                <h4 className="font-display font-black uppercase italic text-white text-lg leading-none tracking-tighter">Vibe Reset</h4>
+              </div>
+              {breathing && (
+                <span className="ml-auto text-[9px] font-black uppercase tracking-widest bg-white/10 px-3 py-1 rounded-full text-white/60">
+                  Round {bRound}/{TOTAL_ROUNDS}
+                </span>
+              )}
             </div>
-            <motion.button 
-              whileTap={{ scale: 0.9 }}
-              className="w-full btn-pop bg-white text-black hover:bg-brand-yellow font-display text-lg py-5"
-            >
-              Start Reset 🧘‍♂️
-            </motion.button>
-          </motion.div>
+
+            {/* Content */}
+            <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
+              {breathDone ? (
+                <div className="text-center space-y-4">
+                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mx-auto border-4 border-white shadow-[0_0_30px_rgba(16,185,129,0.5)]">
+                    <Check size={36} className="text-white" />
+                  </motion.div>
+                  <p className="font-display font-black uppercase italic text-2xl text-white">Well Done!</p>
+                  <p className="text-sm text-white/60 font-bold">{TOTAL_ROUNDS} rounds complete. How do you feel? 💚</p>
+                  <button onClick={startBreathing} className="mt-2 px-6 py-2 bg-white/10 border border-white/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-white/20 transition-all">
+                    Go Again
+                  </button>
+                </div>
+              ) : breathing ? (
+                <div className="flex flex-col items-center gap-5 w-full">
+                  {/* Animated circle */}
+                  <div className="relative flex items-center justify-center">
+                    {/* Outer pulse ring */}
+                    <motion.div
+                      key={`ring-${bPhase}-${bRound}`}
+                      className={`absolute rounded-full border-4 ${BREATH_PHASES[bPhase].ring} opacity-30`}
+                      initial={{ width: 80, height: 80 }}
+                      animate={{ width: BREATH_PHASES[bPhase].large ? 160 : 80, height: BREATH_PHASES[bPhase].large ? 160 : 80 }}
+                      transition={{ duration: BREATH_PHASES[bPhase].duration, ease: 'easeInOut' }}
+                    />
+                    {/* Main circle */}
+                    <motion.div
+                      key={`circle-${bPhase}-${bRound}`}
+                      className={`rounded-full ${BREATH_PHASES[bPhase].color} flex items-center justify-center shadow-[0_0_40px_rgba(255,255,255,0.15)]`}
+                      initial={{ width: BREATH_PHASES[bPhase].large ? 80 : 120, height: BREATH_PHASES[bPhase].large ? 80 : 120 }}
+                      animate={{ width: BREATH_PHASES[bPhase].large ? 120 : 80, height: BREATH_PHASES[bPhase].large ? 120 : 80 }}
+                      transition={{ duration: BREATH_PHASES[bPhase].duration, ease: 'easeInOut' }}
+                    >
+                      <span className="text-3xl font-display font-black text-white">{bCount}</span>
+                    </motion.div>
+                  </div>
+
+                  {/* Phase label */}
+                  <motion.p
+                    key={`label-${bPhase}`}
+                    initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                    className={`font-display font-black uppercase italic text-xl tracking-widest ${BREATH_PHASES[bPhase].text}`}
+                  >
+                    {BREATH_PHASES[bPhase].label}
+                  </motion.p>
+
+                  {/* Round dots */}
+                  <div className="flex gap-2">
+                    {Array.from({ length: TOTAL_ROUNDS }).map((_, i) => (
+                      <div key={i} className={`w-2 h-2 rounded-full transition-all ${i < bRound ? 'bg-white' : 'bg-white/20'}`} />
+                    ))}
+                  </div>
+
+                  <button onClick={stopBreathing} className="text-[9px] font-black uppercase tracking-widest text-white/30 hover:text-white/60 transition-all mt-1">
+                    Stop
+                  </button>
+                </div>
+              ) : (
+                <div className="text-center space-y-4">
+                  <div className="text-[11px] font-bold text-white/50 leading-relaxed space-y-1">
+                    <p>4s <span className="text-sky-300 font-black">inhale</span> → 4s <span className="text-brand-yellow font-black">hold</span> → 4s <span className="text-brand-teal font-black">exhale</span> → 4s <span className="text-purple-300 font-black">hold</span></p>
+                    <p className="text-white/30 text-[9px]">Repeat × {TOTAL_ROUNDS} rounds • Calms your nervous system</p>
+                  </div>
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={startBreathing}
+                    className="w-full py-4 bg-white text-brand-dark font-display font-black uppercase text-base rounded-2xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)] hover:bg-brand-yellow transition-all"
+                  >
+                    Start Breathing 🧘‍♂️
+                  </motion.button>
+                </div>
+              )}
+            </div>
+          </div>
           
           <div className="yandasm-pop-card bg-brand-lavender text-brand-dark p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
              <div className="flex items-center gap-3 mb-6">
