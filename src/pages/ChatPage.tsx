@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Lock, PhoneCall, Smile, Shield, CheckCircle2, Send } from 'lucide-react';
 import Markdown from 'react-markdown';
@@ -10,7 +10,6 @@ interface ChatPageProps {
   user: User;
   users: User[];
   messages: Message[];
-  setMessages: (messages: Message[]) => void;
   chatInput: string;
   setChatInput: (input: string) => void;
   onSend: () => void;
@@ -21,24 +20,12 @@ interface ChatPageProps {
   onUpdateUser?: (user: User) => void;
 }
 
-export const ChatPage = ({ 
-  user, users, messages, setMessages, chatInput, setChatInput, 
-  onSend, isLoading, session, onFinish, scrollRef, onUpdateUser 
+export const ChatPage = ({
+  user, users, messages, chatInput, setChatInput,
+  onSend, isLoading, session, onFinish, scrollRef, onUpdateUser
 }: ChatPageProps) => {
   const [isRating, setIsRating] = useState(false);
 
-  // Persistence: Load previous messages from local storage when session starts
-  useEffect(() => {
-    if (session && session.id && setMessages) {
-      const chatKey = `sm_chat_${session.id}`;
-      const saved = localStorage.getItem(chatKey);
-      if (saved) {
-        setMessages(JSON.parse(saved));
-      } else {
-        setMessages([]);
-      }
-    }
-  }, [session?.id, setMessages]);
 
   const shareMeetingLink = () => {
     if (user.role !== 'counsellor') return;
