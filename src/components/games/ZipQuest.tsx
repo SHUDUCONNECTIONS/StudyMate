@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Trophy } from 'lucide-react';
 
-export const ZipQuest = ({ onClose }: { onClose: () => void }) => {
+export const ZipQuest = ({ onClose, playerName }: { onClose: () => void; playerName?: string }) => {
   const [level, setLevel] = useState(1);
   const [timeLeft, setTimeLeft] = useState(5.0);
   const [isActive, setIsActive] = useState(false);
@@ -20,8 +20,7 @@ export const ZipQuest = ({ onClose }: { onClose: () => void }) => {
   }, []);
 
   const saveScore = (l: number) => {
-    const name = prompt("Legendary Zoomer! Your Name:", "Racer");
-    if (!name) return;
+    const name = playerName || "Racer";
     const updated = [...leaderboard, { name, level: l }].sort((a,b) => b.level - a.level).slice(0,5);
     setLeaderboard(updated);
     localStorage.setItem('sm_leaderboard_zip', JSON.stringify(updated));

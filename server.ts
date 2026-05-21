@@ -8,7 +8,11 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const ai = new GoogleGenAI({ 
+if (!process.env.GEMINI_API_KEY) {
+  throw new Error("GEMINI_API_KEY environment variable is not set");
+}
+
+const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
   httpOptions: {
     headers: {
@@ -42,7 +46,7 @@ async function startServer() {
         }));
 
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.0-flash",
         contents,
         config: {
           systemInstruction: "You are Yandasm, a supportive student wellness companion. Provide empathetic, non-judgmental, and practical guidance for academic stress, anxiety, and personal well-being. Always include a disclaimer for serious mental health crises to seek professional human help or emergency services.",

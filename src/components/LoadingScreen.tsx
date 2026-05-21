@@ -41,7 +41,7 @@ export const LoadingScreen = ({ message = "Aligning your workspace..." }: { mess
             animate={{ y: [0, -10, 0] }}
             transition={{ duration: 2, repeat: Infinity }}
           >
-            <YandasmLogo className="w-16 h-16" />
+            <YandasmLogo className="w-24 h-24" />
           </motion.div>
           <motion.div 
             className="absolute bottom-0 left-0 right-0 h-1 bg-brand-teal"

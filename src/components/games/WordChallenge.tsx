@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { History, CheckCircle2, Sparkles } from 'lucide-react';
 
-export const WordChallenge = ({ onClose }: { onClose: () => void }) => {
+export const WordChallenge = ({ onClose, playerName }: { onClose: () => void; playerName?: string }) => {
   const [guess, setGuess] = useState('');
   const [completed, setCompleted] = useState(false);
   const [leaderboard, setLeaderboard] = useState<{name: string, date: string}[]>([]);
@@ -26,8 +26,8 @@ export const WordChallenge = ({ onClose }: { onClose: () => void }) => {
     if (guess.toLowerCase() === dailyWord) {
       setCompleted(true);
       localStorage.setItem(`sm_word_done_${dayOfYear}`, 'true');
-      const name = prompt("Daily Master! Your name:", "Scholar");
-      if (name) {
+      const name = playerName || "Scholar";
+      {
         const updated = [{ name, date: today.toLocaleDateString() }, ...leaderboard].slice(0, 10);
         setLeaderboard(updated);
         localStorage.setItem('sm_leaderboard_word', JSON.stringify(updated));

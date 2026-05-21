@@ -104,7 +104,7 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
       <div className="w-full max-w-md bg-white p-6 md:p-10 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] md:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] rounded-[2rem] md:rounded-[2.5rem] relative overflow-hidden my-6 md:my-12">
         <div className="absolute -top-10 -right-10 w-40 h-40 bg-brand-yellow/10 rounded-full blur-3xl opacity-50" />
         <div className="text-center mb-6 md:mb-8 relative z-10">
-          <YandasmLogo className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-4" />
+          <YandasmLogo className="w-28 h-28 md:w-36 md:h-36 mx-auto mb-4" />
           <h1 className="text-2xl md:text-3xl font-display font-black text-brand-dark uppercase tracking-tighter leading-none italic">Yandasm</h1>
           <p className="text-[9px] md:text-[10px] font-black text-brand-blue uppercase tracking-[0.3em] mt-3 leading-none italic">Mental Wellness</p>
         </div>

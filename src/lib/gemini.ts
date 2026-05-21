@@ -12,7 +12,7 @@ export const ai = new GoogleGenAI({ apiKey: apiKey || "" });
 
 export async function generateWellnessResponse(history: Message[]) {
   try {
-    const response = await fetch("/api/ai/wellness", {
+    const response = await fetch("/api/wellness", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ history }),

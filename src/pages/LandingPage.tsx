@@ -37,7 +37,7 @@ export const LandingPage = ({ onGetStarted }: LandingPageProps) => {
       <nav className="relative z-30 flex items-center justify-between px-8 lg:px-16 py-8">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-white border-2 border-black rounded-2xl rotate-[-3deg] shadow-[4px_4px_0px_0px_#FFD23F] animate-wiggle">
-            <YandasmLogo className="w-10 h-10" />
+            <YandasmLogo className="w-16 h-16" />
           </div>
           <div className="hidden sm:block">
             <h1 className="text-2xl font-display font-black text-brand-dark tracking-tighter uppercase leading-none">Yandasm</h1>

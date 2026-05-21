@@ -5,7 +5,7 @@ import { Smile, Zap, Trophy, Brain } from 'lucide-react';
 
 interface GameItem { id: number; x: number; y: number; vx: number; vy: number; type: 'vibe' | 'stress'; word: string; sliced: boolean; }
 
-export const ZenSlasher = ({ onClose }: { onClose: () => void }) => {
+export const ZenSlasher = ({ onClose, playerName }: { onClose: () => void; playerName?: string }) => {
   const [score, setScore] = useState(0);
   const [items, setItems] = useState<GameItem[]>([]);
   const [isGameOver, setIsGameOver] = useState(false);
@@ -22,8 +22,7 @@ export const ZenSlasher = ({ onClose }: { onClose: () => void }) => {
   }, []);
 
   const saveToLeaderboard = (finalScore: number) => {
-    const name = prompt("Enter your Name for the Leaderboard:", "Player");
-    if (!name) return;
+    const name = playerName || "Player";
     const newEntry = { name, score: finalScore };
     const updated = [...leaderboard, newEntry].sort((a, b) => b.score - a.score).slice(0, 5);
     setLeaderboard(updated);
