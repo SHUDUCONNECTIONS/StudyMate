@@ -111,12 +111,9 @@ export const LandingPage = ({ onGetStarted }: LandingPageProps) => {
       </main>
 
       <div className="py-20 bg-brand-dark text-white border-t-4 border-black mt-20 relative z-20">
-         <div className="max-w-7xl mx-auto px-8 lg:px-16 flex flex-col md:flex-row justify-between items-center gap-10 text-center md:text-left">
-            <div>
-               <h3 className="text-3xl font-display font-black uppercase italic text-brand-yellow">Emergency? We're here.</h3>
-               <p className="text-brand-yellow/60 font-black uppercase tracking-widest mt-2">Available 24/7 across all campuses</p>
-            </div>
-            <button className="btn-pop-blue py-4 px-10 text-xl">Call Support Now</button>
+         <div className="max-w-7xl mx-auto px-8 lg:px-16 text-center md:text-left">
+            <h3 className="text-3xl font-display font-black uppercase italic text-brand-yellow">Emergency? We're here.</h3>
+            <p className="text-brand-yellow/60 font-black uppercase tracking-widest mt-2">Available 24/7 across all campuses</p>
          </div>
       </div>
     </div>
