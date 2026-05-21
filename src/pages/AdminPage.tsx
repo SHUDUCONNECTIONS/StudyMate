@@ -204,7 +204,7 @@ export const AdminPage = ({ users, onApprove, onAddCounsellor, bookings, message
         {/* POPIA Student Details Modal */}
         <AnimatePresence>
           {selectedStudent && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-[115] flex items-center justify-center p-4">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setSelectedStudent(null)} />
               <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="relative w-full max-w-2xl yandasm-card bg-white p-8 max-h-[90vh] overflow-y-auto no-scrollbar">
                  <div className="flex items-center justify-between mb-8">
@@ -383,7 +383,7 @@ export const AdminPage = ({ users, onApprove, onAddCounsellor, bookings, message
       {/* Add Counsellor Modal */}
       <AnimatePresence>
         {showAddModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[115] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowAddModal(false)} />
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="relative w-full max-w-md yandasm-card bg-white p-8 border-4 border-black shadow-[8px_8px_0px_0px_#000]">
               <div className="flex items-center justify-between mb-8">

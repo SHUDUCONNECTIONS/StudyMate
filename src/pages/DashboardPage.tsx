@@ -469,7 +469,7 @@ export const DashboardPage = ({
       </div>
       <AnimatePresence>
         {selectedCounsellor && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 lg:p-12">
+          <div className="fixed inset-0 z-[115] flex items-center justify-center p-4 lg:p-12">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setSelectedCounsellor(null)} />
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="relative w-full max-w-6xl yandasm-card bg-white p-6 lg:p-12 max-h-[95vh] overflow-hidden flex flex-col">
                <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
