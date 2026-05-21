@@ -42,7 +42,7 @@ export const LandingPage = ({ onGetStarted }: LandingPageProps) => {
           </div>
           <div className="hidden sm:block">
             <h1 className="text-2xl font-display font-black text-brand-dark tracking-tighter uppercase leading-none">Yandasm</h1>
-            <p className="text-[10px] font-black text-brand-orange uppercase tracking-[0.2em] mt-1 italic">Shudu Connections</p>
+            <p className="text-[10px] font-black text-brand-orange uppercase tracking-[0.2em] mt-1 italic">Mental Wellness</p>
           </div>
         </div>
         <div className="flex items-center gap-6">
