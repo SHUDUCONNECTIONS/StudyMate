@@ -124,20 +124,43 @@ function App() {
   }, [currentUser?.id]);
 
   // --- GLOBAL GAME LEADERBOARDS ---
+  // Gated on currentUser so request.auth is non-null when Firestore evaluates rules
   useEffect(() => {
+    if (!currentUser) return;
     const mkListener = (game: string, setter: (v: { name: string; score: number }[]) => void) =>
       onSnapshot(
         query(collection(db, 'scores'), where('game', '==', game), orderBy('score', 'desc')),
         snap => setter(snap.docs.map(d => ({ name: d.data().name as string, score: d.data().score as number }))),
-        () => {} // ignore permission errors silently
+        () => {} // ignore index-missing or other errors silently
       );
     const u1 = mkListener('zen',  setZenLeaderboard);
     const u2 = mkListener('zip',  setZipLeaderboard);
     const u3 = mkListener('word', setWordLeaderboard);
     return () => { u1(); u2(); u3(); };
-  }, []);
+  }, [currentUser?.id]);
 
-  const prevUnreadRef = useRef<number | null>(null);
+  const prevUnreadRef     = useRef<number | null>(null);
+  const audioCtxRef       = useRef<AudioContext | null>(null);
+  const hasUserGestureRef = useRef(false);
+
+  // Unlock AudioContext and vibration on the first user interaction
+  useEffect(() => {
+    const unlock = () => {
+      hasUserGestureRef.current = true;
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume();
+    };
+    window.addEventListener('click',   unlock, { once: true });
+    window.addEventListener('keydown', unlock, { once: true });
+    window.addEventListener('touchstart', unlock, { once: true });
+    return () => {
+      window.removeEventListener('click',   unlock);
+      window.removeEventListener('keydown', unlock);
+      window.removeEventListener('touchstart', unlock);
+    };
+  }, []);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -157,7 +180,7 @@ function App() {
       // Play sound + vibrate only when genuinely new notifications arrive (not on initial load)
       if (prevUnreadRef.current !== null && unreadCount > prevUnreadRef.current) {
         playNotificationSound();
-        if ('vibrate' in navigator) navigator.vibrate([200, 80, 200, 80, 100]);
+        if (hasUserGestureRef.current && 'vibrate' in navigator) navigator.vibrate([200, 80, 200, 80, 100]);
       }
       prevUnreadRef.current = unreadCount;
       setNotifications(sorted);
@@ -244,12 +267,13 @@ function App() {
   // --- ACTIONS ---
 
   // Funky ascending-arpeggio notification sound using the Web Audio API
+  // Uses the shared AudioContext created on first user gesture — avoids the
+  // "AudioContext was not allowed to start" browser policy error.
   const playNotificationSound = () => {
     try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      // C-E-G-C major arpeggio with a square wave for that funky feel
+      const ctx = audioCtxRef.current;
+      if (!ctx || !hasUserGestureRef.current) return;
+      if (ctx.state === 'suspended') ctx.resume();
       [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
         const osc  = ctx.createOscillator();
         const gain = ctx.createGain();
