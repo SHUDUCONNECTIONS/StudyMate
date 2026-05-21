@@ -2,24 +2,21 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  Shield, Download, X, ArrowRight, Phone, Mail, UserPlus, Check
+  Shield, Download, X, Phone, Mail, UserPlus, Check, Flag, Bell
 } from 'lucide-react';
-import Markdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { User, Booking, Message } from '../types';
+import { User, Booking, Notification } from '../types';
 
 interface AdminPageProps {
   users: User[];
   onApprove: (userId: string, approved: boolean) => void;
   onAddCounsellor: (name: string, email: string, password: string, specialty: string) => Promise<string | null>;
   bookings: Booking[];
-  messages: Message[];
+  notifications: Notification[];
   onDownloadPDF: (user: User) => void;
 }
 
-export const AdminPage = ({ users, onApprove, onAddCounsellor, bookings, messages, onDownloadPDF }: AdminPageProps) => {
-  const [activeTab, setActiveTab] = useState<'pending' | 'all' | 'students' | 'chats'>('pending');
-  const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+export const AdminPage = ({ users, onApprove, onAddCounsellor, bookings, notifications, onDownloadPDF }: AdminPageProps) => {
+  const [activeTab, setActiveTab] = useState<'pending' | 'all' | 'students' | 'reports'>('pending');
   const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({ name: '', email: '', password: '', specialty: '' });
@@ -48,24 +45,11 @@ export const AdminPage = ({ users, onApprove, onAddCounsellor, bookings, message
   const pending = users.filter((u: any) => u.role === 'counsellor' && u.status === 'pending');
   const allCounsellors = users.filter((u: any) => u.role === 'counsellor');
   const allLearners = users.filter((u: any) => u.role === 'learner');
-
-  const chatSessions = useMemo(() => {
-    return (bookings || []).map((b: any) => {
-      const learner = users.find((u: any) => u.id === b.learnerId);
-      const counsellor = users.find((u: any) => u.id === b.counsellorId);
-      const sessionMessages = (messages || []).filter((m: any) => (m as any).sessionId === b.id);
-      return { ...b, learner, counsellor, messageCount: sessionMessages.length };
-    }).sort((a: any, b: any) => b.id.localeCompare(a.id));
-  }, [bookings, users, messages]);
-
-  const selectedChatMessages = useMemo(() => {
-    if (!selectedChatId) return [];
-    return (messages || []).filter((m: any) => (m as any).sessionId === selectedChatId);
-  }, [selectedChatId, messages]);
-
-  const selectedBooking = useMemo(() => {
-    return (bookings || []).find((b: any) => b.id === selectedChatId);
-  }, [selectedChatId, bookings]);
+  const reports = useMemo(() =>
+    (notifications || [])
+      .filter(n => n.type === 'report')
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
+    [notifications]);
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-4xl mx-auto pb-20">
@@ -83,16 +67,16 @@ export const AdminPage = ({ users, onApprove, onAddCounsellor, bookings, message
           <UserPlus size={16} /> Add Counsellor
         </button>
         <div className="flex bg-slate-100 p-1 rounded-2xl w-full sm:w-auto">
-          {['pending', 'all', 'students', 'chats'].map((tab: any) => (
-            <button 
+          {['pending', 'all', 'students', 'reports'].map((tab: any) => (
+            <button
               key={tab}
-              onClick={() => { setActiveTab(tab); setSelectedChatId(null); }} 
+              onClick={() => setActiveTab(tab)}
               className={`flex-1 sm:px-6 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${activeTab === tab ? 'bg-white shadow-sm text-brand-blue' : 'text-slate-400'}`}
             >
-              {tab === 'pending' ? `Pending (${pending.length})` : 
-               tab === 'all' ? `Counsellors (${allCounsellors.length})` : 
+              {tab === 'pending' ? `Pending (${pending.length})` :
+               tab === 'all' ? `Counsellors (${allCounsellors.length})` :
                tab === 'students' ? `Students (${allLearners.length})` :
-               `Chats (${bookings.length})`}
+               `Reports (${reports.length})`}
             </button>
           ))}
         </div>
@@ -293,89 +277,34 @@ export const AdminPage = ({ users, onApprove, onAddCounsellor, bookings, message
           )}
         </AnimatePresence>
 
-        {activeTab === 'chats' && !selectedChatId && (
+        {activeTab === 'reports' && (
           <div className="space-y-4 px-2">
-            <h3 className="font-display font-black uppercase text-brand-dark tracking-widest mb-6 px-1">Global Interaction Oversight</h3>
-            {chatSessions.length === 0 ? (
-              <div className="yandasm-card p-20 text-center text-slate-300 font-bold uppercase tracking-widest text-xs border-dashed border-2 rounded-[2rem]">No conversations yet</div>
+            <div className="flex items-center gap-3 mb-6 px-1">
+              <div className="p-2 bg-red-100 rounded-xl text-red-500"><Flag size={16} /></div>
+              <h3 className="font-display font-black uppercase text-brand-dark tracking-widest">Learner Reports</h3>
+            </div>
+            {reports.length === 0 ? (
+              <div className="yandasm-card p-20 text-center border-dashed border-2 rounded-[2rem] flex flex-col items-center gap-4">
+                <Bell size={32} className="text-slate-200" />
+                <p className="text-slate-300 font-bold uppercase tracking-widest text-xs">No reports filed</p>
+              </div>
             ) : (
-              chatSessions.map((session: any) => (
-                <div 
-                  key={session.id} 
-                  className="yandasm-card bg-white p-6 border-2 border-black hover:bg-slate-50 cursor-pointer transition-all flex flex-col sm:flex-row items-center justify-between gap-6 shadow-[4px_4px_0px_0px_#000] rounded-[2rem]"
-                  onClick={() => setSelectedChatId(session.id)}
-                >
-                  <div className="flex items-center gap-6">
-                    <div className="flex -space-x-3">
-                      <img src={(session.learner as User)?.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed=Anon'} className="w-12 h-12 rounded-xl border-2 border-black z-10 bg-white" />
-                      <img src={(session.counsellor as User)?.avatar} className="w-12 h-12 rounded-xl border-2 border-black z-0 bg-white" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-display font-black text-brand-dark uppercase text-sm italic">
-                          {session.anonymous ? 'Anonymous' : ((session.learner as User)?.name || 'Unknown')}
-                        </p>
-                        <ArrowRight size={12} className="text-slate-300" />
-                        <p className="font-display font-black text-brand-dark uppercase text-sm italic">
-                          {(session.counsellor as User)?.name || 'Unknown'}
-                        </p>
-                      </div>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">
-                        {session.time} • {session.messageCount} messages
-                      </p>
-                    </div>
+              reports.map(r => (
+                <div key={r.id} className="yandasm-card bg-white p-6 border-2 border-red-200 shadow-[4px_4px_0px_0px_rgba(239,68,68,0.3)] rounded-[2rem] flex items-start gap-4">
+                  <div className="p-2 bg-red-100 rounded-xl text-red-500 shrink-0 mt-1"><Flag size={16} /></div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-display font-black text-brand-dark uppercase text-sm italic">{r.title}</p>
+                    <p className="text-xs font-bold text-slate-500 mt-1 leading-relaxed">{r.message}</p>
+                    <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-3">
+                      {new Date(r.timestamp).toLocaleString()}
+                    </p>
                   </div>
-                  <button className="btn-pop py-3 px-6 text-[10px] uppercase font-black border-2 bg-brand-yellow rounded-xl">Review History</button>
+                  <span className={`shrink-0 text-[8px] font-black uppercase px-3 py-1 rounded-full border ${r.read ? 'bg-slate-50 text-slate-300 border-slate-100' : 'bg-red-50 text-red-500 border-red-200'}`}>
+                    {r.read ? 'Read' : 'New'}
+                  </span>
                 </div>
               ))
             )}
-          </div>
-        )}
-
-        {activeTab === 'chats' && selectedChatId && (
-          <div className="space-y-6 px-2">
-            <div className="flex items-center justify-between bg-white p-6 border-2 border-black rounded-[2rem] mb-8 shadow-[4px_4px_0px_0px_#000]">
-              <button 
-                onClick={() => setSelectedChatId(null)}
-                className="flex items-center gap-2 text-slate-400 hover:text-brand-blue transition-colors group"
-              >
-                <ArrowRight size={18} className="rotate-180 group-hover:-translate-x-1 transition-transform" />
-                <span className="font-black uppercase text-[10px] tracking-widest">Back Oversight Directory</span>
-              </button>
-              <div className="text-right">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Auditing Session</p>
-                <p className="text-xs font-black text-brand-dark uppercase tracking-tight italic">
-                  ID: {selectedBooking?.id}
-                </p>
-              </div>
-            </div>
-
-            <div className="yandasm-card bg-slate-100/30 border-2 border-black p-6 space-y-6 max-h-[600px] overflow-y-auto no-scrollbar rounded-[2rem]">
-              {selectedChatMessages.length === 0 ? (
-                <div className="text-center py-20 text-slate-300 uppercase font-black text-[10px] tracking-widest border-2 border-dashed border-slate-200 rounded-2xl">
-                  Transcript Empty
-                </div>
-              ) : (
-                selectedChatMessages.map((msg: any) => {
-                  const sender = users.find((u: any) => u.id === msg.senderId);
-                  return (
-                    <div key={msg.id} className={`flex flex-col ${msg.role === 'assistant' ? 'items-start' : 'items-end'}`}>
-                       <div className="flex items-center gap-2 mb-2 px-3">
-                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{sender?.name || 'System Assistant'}</span>
-                          <span className="text-[8px] font-medium text-slate-300">{new Date(msg.timestamp).toLocaleTimeString()}</span>
-                       </div>
-                       <div className={`max-w-[85%] p-5 rounded-[2rem] border-2 border-black shadow-[4px_4px_0px_0px_#000] ${msg.role === 'assistant' ? 'bg-white rounded-tl-none' : 'bg-brand-blue text-white rounded-tr-none'}`}>
-                          <div className="markdown-body prose prose-sm max-w-none prose-slate">
-                            <Markdown>
-                              {msg.content}
-                            </Markdown>
-                          </div>
-                       </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
           </div>
         )}
       </div>

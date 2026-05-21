@@ -8,7 +8,7 @@ export interface Notification {
   userId: string; // Recipient
   title: string;
   message: string;
-  type: 'booking' | 'registration' | 'info';
+  type: 'booking' | 'registration' | 'info' | 'report';
   timestamp: Date;
   read: boolean;
 }

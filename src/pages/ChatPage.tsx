@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Lock, PhoneCall, Smile, Shield, CheckCircle2, Send } from 'lucide-react';
+import { Lock, PhoneCall, Smile, Shield, CheckCircle2, Send, Flag, AlertTriangle } from 'lucide-react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { User, Message, Booking } from '../types';
@@ -16,15 +16,35 @@ interface ChatPageProps {
   isLoading: boolean;
   session: Booking | null;
   onFinish: (bookingId: string, rating: number) => void;
+  onReport: (sessionId: string, reason: string, details: string) => Promise<void>;
   scrollRef: React.RefObject<HTMLDivElement>;
   onUpdateUser?: (user: User) => void;
 }
 
 export const ChatPage = ({
   user, users, messages, chatInput, setChatInput,
-  onSend, isLoading, session, onFinish, scrollRef, onUpdateUser
+  onSend, isLoading, session, onFinish, onReport, scrollRef, onUpdateUser
 }: ChatPageProps) => {
   const [isRating, setIsRating] = useState(false);
+  const [isReporting, setIsReporting] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDetails, setReportDetails] = useState('');
+  const [reportSending, setReportSending] = useState(false);
+  const [reportSent, setReportSent] = useState(false);
+
+  const submitReport = async () => {
+    if (!reportReason || !session) return;
+    setReportSending(true);
+    await onReport(session.id, reportReason, reportDetails);
+    setReportSending(false);
+    setReportSent(true);
+    setTimeout(() => {
+      setIsReporting(false);
+      setReportSent(false);
+      setReportReason('');
+      setReportDetails('');
+    }, 1800);
+  };
 
 
   const shareMeetingLink = () => {
@@ -69,6 +89,14 @@ export const ChatPage = ({
               className="px-2 md:px-4 py-1.5 md:py-2 bg-sky-100 text-sky-600 border border-sky-200 rounded-lg text-[7px] md:text-[10px] font-black uppercase flex items-center gap-1 hover:bg-sky-200 transition-all"
             >
               <PhoneCall size={10} /> <span className="hidden sm:inline">Room</span>
+            </button>
+          )}
+          {session && user.role === 'learner' && (
+            <button
+              onClick={() => setIsReporting(true)}
+              className="px-2 md:px-4 py-1.5 md:py-2 bg-red-50 text-red-500 border border-red-200 rounded-lg text-[7px] md:text-[10px] font-black uppercase flex items-center gap-1 hover:bg-red-100 transition-all"
+            >
+              <Flag size={10} /> <span className="hidden sm:inline">Report</span>
             </button>
           )}
           {session && (
@@ -199,6 +227,76 @@ export const ChatPage = ({
                   ))}
                </div>
                <button onClick={() => setIsRating(false)} className="text-[10px] font-black uppercase text-slate-400">Not now</button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Report modal */}
+      <AnimatePresence>
+        {isReporting && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-md">
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
+              className="yandasm-card bg-white p-8 w-full max-w-md border-4 border-black shadow-[8px_8px_0px_0px_#000]"
+            >
+              {reportSent ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle2 size={32} className="text-emerald-500" />
+                  </div>
+                  <h3 className="text-xl font-black uppercase text-brand-dark">Report Sent</h3>
+                  <p className="text-xs font-bold text-slate-400 mt-2 uppercase tracking-widest">An admin has been alerted</p>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-red-100 rounded-xl text-red-500"><AlertTriangle size={20} /></div>
+                    <div>
+                      <h3 className="text-xl font-display font-black text-brand-dark uppercase italic">Report Session</h3>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Admin will be alerted immediately</p>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-2">Reason</p>
+                      <select
+                        className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 text-sm font-bold text-slate-600 outline-none focus:border-red-400"
+                        value={reportReason}
+                        onChange={e => setReportReason(e.target.value)}
+                      >
+                        <option value="">Select a reason…</option>
+                        <option value="Inappropriate behaviour">Inappropriate behaviour</option>
+                        <option value="Harassment or bullying">Harassment or bullying</option>
+                        <option value="Misconduct">Misconduct</option>
+                        <option value="Unsafe advice">Unsafe advice</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-2">Additional details (optional)</p>
+                      <textarea
+                        className="w-full h-24 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-red-400 resize-none no-scrollbar"
+                        placeholder="Describe what happened…"
+                        value={reportDetails}
+                        onChange={e => setReportDetails(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-3 mt-6">
+                    <button onClick={() => setIsReporting(false)} className="flex-1 py-3 rounded-xl border-2 border-slate-200 text-[10px] font-black uppercase text-slate-400 hover:bg-slate-50 transition-all">
+                      Cancel
+                    </button>
+                    <button
+                      onClick={submitReport}
+                      disabled={!reportReason || reportSending}
+                      className="flex-1 py-3 bg-red-500 text-white rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_#000] text-[10px] font-black uppercase flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
+                    >
+                      <Flag size={12} /> {reportSending ? 'Sending…' : 'Submit Report'}
+                    </button>
+                  </div>
+                </>
+              )}
             </motion.div>
           </div>
         )}
