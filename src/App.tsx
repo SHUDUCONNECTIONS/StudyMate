@@ -320,6 +320,29 @@ function App() {
     }
   };
 
+  const handleAddCounsellor = async (name: string, email: string, password: string, specialty: string) => {
+    try {
+      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      const uid = credential.user.uid;
+      const newUser: Omit<User, 'password'> = {
+        id: uid,
+        name,
+        email,
+        role: 'counsellor',
+        status: 'approved',
+        specialty,
+        avatar: `https://api.dicebear.com/7.x/notionists/svg?seed=${name}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`,
+        avatarSeed: name,
+        popiaConsent: true,
+      };
+      await setDoc(doc(db, 'users', uid), newUser);
+      return null;
+    } catch (error: any) {
+      if (error.code === 'auth/email-already-in-use') return 'Email already in use.';
+      return error.message || 'Failed to create account.';
+    }
+  };
+
   const handleApprove = async (id: string, approve: boolean) => {
     await updateDoc(doc(db, 'users', id), { status: approve ? 'approved' : 'disapproved' });
     await addNotification(
@@ -626,7 +649,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<DashboardPage user={currentUser} users={users} bookings={bookings} onJoinSess={(b: any) => { setActiveSession(b); navigate('/chat'); }} onBook={handleBook} onUpdateAvailability={handleUpdateAvailability} onCancelBooking={handleCancelBooking} onUpdateBooking={handleUpdateBooking} notifications={notifications} setNotifications={setNotifications} onToggleTrust={handleToggleTrust} onStartDirectChat={startDirectChat} />} />
-                <Route path="/admin" element={<AdminPage users={users} onApprove={handleApprove} bookings={bookings} messages={messages} onDownloadPDF={downloadPopiaPDF} />} />
+                <Route path="/admin" element={<AdminPage users={users} onApprove={handleApprove} onAddCounsellor={handleAddCounsellor} bookings={bookings} messages={messages} onDownloadPDF={downloadPopiaPDF} />} />
                 <Route path="/profile" element={<ProfilePage user={currentUser} onUpdate={handleUpdateProfile} onLogout={() => signOut(auth)} />} />
                 <Route path="/chat" element={<ChatPage user={currentUser} users={users} messages={messages} setMessages={setMessages} chatInput={chatInput} setChatInput={setChatInput} onSend={handleSendChat} isLoading={isLoading} session={activeSession} onFinish={(id: string, rating: number) => submitRating(id, rating)} scrollRef={scrollRef} onUpdateUser={handleUpdateProfile} />} />
                 <Route path="/emergency" element={<EmergencyPage />} />

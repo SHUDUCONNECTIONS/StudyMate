@@ -1,8 +1,8 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Shield, Download, X, ArrowRight, Phone, Mail
+import {
+  Shield, Download, X, ArrowRight, Phone, Mail, UserPlus, Check
 } from 'lucide-react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -11,15 +11,39 @@ import { User, Booking, Message } from '../types';
 interface AdminPageProps {
   users: User[];
   onApprove: (userId: string, approved: boolean) => void;
+  onAddCounsellor: (name: string, email: string, password: string, specialty: string) => Promise<string | null>;
   bookings: Booking[];
   messages: Message[];
   onDownloadPDF: (user: User) => void;
 }
 
-export const AdminPage = ({ users, onApprove, bookings, messages, onDownloadPDF }: AdminPageProps) => {
+export const AdminPage = ({ users, onApprove, onAddCounsellor, bookings, messages, onDownloadPDF }: AdminPageProps) => {
   const [activeTab, setActiveTab] = useState<'pending' | 'all' | 'students' | 'chats'>('pending');
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addForm, setAddForm] = useState({ name: '', email: '', password: '', specialty: '' });
+  const [addError, setAddError] = useState<string | null>(null);
+  const [addLoading, setAddLoading] = useState(false);
+  const [addSuccess, setAddSuccess] = useState(false);
+
+  const handleAdd = async () => {
+    if (!addForm.name || !addForm.email || !addForm.password || !addForm.specialty) {
+      setAddError('All fields are required.');
+      return;
+    }
+    setAddLoading(true);
+    setAddError(null);
+    const err = await onAddCounsellor(addForm.name, addForm.email, addForm.password, addForm.specialty);
+    setAddLoading(false);
+    if (err) { setAddError(err); return; }
+    setAddSuccess(true);
+    setTimeout(() => {
+      setShowAddModal(false);
+      setAddForm({ name: '', email: '', password: '', specialty: '' });
+      setAddSuccess(false);
+    }, 1200);
+  };
   
   const pending = users.filter((u: any) => u.role === 'counsellor' && u.status === 'pending');
   const allCounsellors = users.filter((u: any) => u.role === 'counsellor');
@@ -47,11 +71,17 @@ export const AdminPage = ({ users, onApprove, bookings, messages, onDownloadPDF 
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-4xl mx-auto pb-20">
       <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4 px-2">
         <div className="flex items-center gap-3">
-           <div className="p-2 bg-brand-blue/10 border-2 border-brand-blue rounded-xl text-brand-blue">
-             <Shield size={24} />
-           </div>
-           <h2 className="text-2xl lg:text-3xl font-display font-black text-brand-dark uppercase tracking-tighter italic">Admin Oversight</h2>
+          <div className="p-2 bg-brand-blue/10 border-2 border-brand-blue rounded-xl text-brand-blue">
+            <Shield size={24} />
+          </div>
+          <h2 className="text-2xl lg:text-3xl font-display font-black text-brand-dark uppercase tracking-tighter italic">Admin Oversight</h2>
         </div>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="btn-pop-teal py-3 px-6 text-[11px] flex items-center gap-2 shrink-0"
+        >
+          <UserPlus size={16} /> Add Counsellor
+        </button>
         <div className="flex bg-slate-100 p-1 rounded-2xl w-full sm:w-auto">
           {['pending', 'all', 'students', 'chats'].map((tab: any) => (
             <button 
@@ -343,6 +373,56 @@ export const AdminPage = ({ users, onApprove, bookings, messages, onDownloadPDF 
           </div>
         )}
       </div>
+
+      {/* Add Counsellor Modal */}
+      <AnimatePresence>
+        {showAddModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowAddModal(false)} />
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="relative w-full max-w-md yandasm-card bg-white p-8 border-4 border-black shadow-[8px_8px_0px_0px_#000]">
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h3 className="text-2xl font-display font-black text-brand-dark uppercase italic tracking-tighter">Add Counsellor</h3>
+                  <p className="text-[10px] font-black text-brand-teal uppercase tracking-widest mt-1">Pre-approved · Active immediately</p>
+                </div>
+                <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-slate-100 rounded-xl transition-all"><X size={20} /></button>
+              </div>
+
+              <div className="space-y-4">
+                {[
+                  { label: 'Full Name', key: 'name', type: 'text', placeholder: 'e.g. Dr. Lerato Mokoena' },
+                  { label: 'Email Address', key: 'email', type: 'email', placeholder: 'counsellor@school.ac.za' },
+                  { label: 'Password', key: 'password', type: 'password', placeholder: 'Minimum 6 characters' },
+                  { label: 'Specialty', key: 'specialty', type: 'text', placeholder: 'e.g. Academic Stress, Trauma' },
+                ].map(({ label, key, type, placeholder }) => (
+                  <div key={key} className="space-y-2">
+                    <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">{label}</p>
+                    <input
+                      type={type}
+                      value={addForm[key as keyof typeof addForm]}
+                      onChange={e => setAddForm({ ...addForm, [key]: e.target.value })}
+                      placeholder={placeholder}
+                      className="w-full bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 outline-none focus:border-brand-teal transition-colors font-bold text-sm"
+                    />
+                  </div>
+                ))}
+
+                {addError && (
+                  <p className="text-[11px] font-black text-red-500 uppercase tracking-widest bg-red-50 p-3 rounded-xl border border-red-100">{addError}</p>
+                )}
+              </div>
+
+              <button
+                onClick={handleAdd}
+                disabled={addLoading || addSuccess}
+                className="w-full btn-pop-teal py-4 mt-8 text-[11px] flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {addSuccess ? <><Check size={16} /> Counsellor Added!</> : addLoading ? 'Creating Account…' : <><UserPlus size={16} /> Create & Pre-Approve</>}
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
