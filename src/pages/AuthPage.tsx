@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, ChangeEvent } from 'react';
+import React, { useState, useRef, useCallback, ChangeEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import SignatureCanvas from 'react-signature-canvas';
 import { 
@@ -24,6 +24,20 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
   const [step, setStep] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const sigCanvas = useRef<any>(null);
+  // Patch the canvas getContext before react-signature-canvas initialises it in
+  // componentDidMount, so the context is created with willReadFrequently: true.
+  // React fires ref callbacks (commitMutationEffects) before componentDidMount
+  // (commitLayoutEffects), making this the only reliable intercept point.
+  const patchSigCanvasContext = useCallback((node: HTMLDivElement | null) => {
+    if (!node) return;
+    const canvas = node.querySelector('canvas');
+    if (!canvas) return;
+    const original = canvas.getContext.bind(canvas);
+    (canvas as any).getContext = (type: string, attrs?: any) => {
+      if (type === '2d') return original(type, { willReadFrequently: true, ...(attrs || {}) });
+      return original(type, attrs);
+    };
+  }, []);
   const [formData, setFormData] = useState({ 
     name: '', 
     email: '', 
@@ -266,6 +280,10 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
                       setError('Please fill in all basic details.');
                       return;
                     }
+                    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+                      setError('Please enter a valid email address.');
+                      return;
+                    }
                     if (formData.password.length < 6) {
                       setError('Password must be at least 6 characters.');
                       return;
@@ -362,8 +380,8 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
 
               <div className="mt-6">
                 <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-2 px-1">Guardian Digital Signature</p>
-                <div className="border-2 border-black/10 rounded-2xl bg-white overflow-hidden shadow-inner flex justify-center">
-                  <SignatureCanvas 
+                <div ref={patchSigCanvasContext} className="border-2 border-black/10 rounded-2xl bg-white overflow-hidden shadow-inner flex justify-center">
+                  <SignatureCanvas
                     ref={sigCanvas}
                     penColor='black'
                     canvasProps={{width: window.innerWidth < 400 ? 300 : 350, height: 180, className: 'sigCanvas h-[180px]'}}

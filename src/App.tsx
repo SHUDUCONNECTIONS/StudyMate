@@ -300,8 +300,20 @@ function App() {
 
       return null;
     } catch (error: any) {
-      if (error.code === 'auth/email-already-in-use') return 'Email already in use. Please sign in instead.';
-      return error.message || 'Registration failed.';
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          return 'Email already in use. Please sign in instead.';
+        case 'auth/invalid-email':
+          return 'Invalid email address format.';
+        case 'auth/weak-password':
+          return 'Password must be at least 6 characters.';
+        case 'auth/operation-not-allowed':
+          return 'Registration is currently unavailable. Please contact support.';
+        case 'auth/too-many-requests':
+          return 'Too many attempts. Please try again later.';
+        default:
+          return error.message || 'Registration failed.';
+      }
     }
   };
 
@@ -321,11 +333,21 @@ function App() {
       await signInWithEmailAndPassword(auth, email, password);
       return null;
     } catch (error: any) {
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-        return 'User not found. Please register to continue.';
+      switch (error.code) {
+        case 'auth/user-not-found':
+        case 'auth/invalid-credential':
+          return 'No account found with these credentials. Please register.';
+        case 'auth/wrong-password':
+          return 'Incorrect password. Please try again.';
+        case 'auth/invalid-email':
+          return 'Invalid email address.';
+        case 'auth/too-many-requests':
+          return 'Too many failed attempts. Please try again later.';
+        case 'auth/user-disabled':
+          return 'This account has been disabled. Please contact support.';
+        default:
+          return error.message || 'Login failed.';
       }
-      if (error.code === 'auth/wrong-password') return 'Incorrect password. Please try again.';
-      return error.message || 'Login failed.';
     }
   };
 
