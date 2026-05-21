@@ -411,7 +411,7 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
                     return;
                   }
 
-                  const signature = sigCanvas.current.getTrimmedCanvas().toDataURL('image/png');
+                  const signature = sigCanvas.current.getCanvas().toDataURL('image/png');
                   const finalPopia = { ...popiaData, popiaSignature: signature };
 
                   const err = await onRegister(

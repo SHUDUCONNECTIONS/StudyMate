@@ -262,47 +262,59 @@ function App() {
     profilePhoto?: string,
     popiaData?: PopiaData
   ) => {
-    try {
-      const credential = await createUserWithEmailAndPassword(auth, email, password);
-      const uid = credential.user.uid;
+    const buildUserDoc = (uid: string) => ({
+      id: uid,
+      name,
+      email,
+      role,
+      avatar: profilePhoto || `https://api.dicebear.com/7.x/notionists/svg?seed=${avatarSeed || name}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`,
+      avatarSeed: avatarSeed || name,
+      gender: gender || 'other',
+      ...(role === 'counsellor' && { status: 'pending' as const }),
+      ...(specialty && { specialty }),
+      ...(department && { department }),
+      ...(year !== undefined && { year }),
+      ...(qualifications && { qualifications }),
+      ...(cvFileName && { cvFileName }),
+      ...(profilePhoto && { profilePhoto }),
+      ...(popiaData && { ...popiaData }),
+      popiaConsent: role === 'admin' ? true : (popiaData?.popiaConsent ?? false),
+    });
 
-      // Build user object then strip undefined values — Firestore rejects undefined fields
-      const rawUser = {
-        id: uid,
-        name,
-        email,
-        role,
-        avatar: profilePhoto || `https://api.dicebear.com/7.x/notionists/svg?seed=${avatarSeed || name}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`,
-        avatarSeed: avatarSeed || name,
-        gender: gender || 'other',
-        ...(role === 'counsellor' && { status: 'pending' as const }),
-        ...(specialty && { specialty }),
-        ...(department && { department }),
-        ...(year !== undefined && { year }),
-        ...(qualifications && { qualifications }),
-        ...(cvFileName && { cvFileName }),
-        ...(profilePhoto && { profilePhoto }),
-        ...(popiaData && { ...popiaData }),
-        popiaConsent: role === 'admin' ? true : (popiaData?.popiaConsent ?? false),
-      };
-
+    const finaliseUser = async (uid: string) => {
+      const rawUser = buildUserDoc(uid);
       await setDoc(doc(db, 'users', uid), rawUser);
-      // Set currentUser immediately — avoids race where onAuthStateChanged fires before
-      // setDoc completes and getDoc finds no document, leaving the user stuck.
       setCurrentUser(rawUser as unknown as User);
-
       if (role === 'counsellor') {
         const adminSnap = await getDocs(query(collection(db, 'users'), where('role', '==', 'admin')));
-        adminSnap.forEach(d => {
-          addNotification(d.id, 'New registration', `${name} is awaiting approval.`, 'registration');
-        });
+        adminSnap.forEach(d =>
+          addNotification(d.id, 'New registration', `${name} is awaiting approval.`, 'registration')
+        );
       }
+    };
 
+    try {
+      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      await finaliseUser(credential.user.uid);
       return null;
     } catch (error: any) {
       switch (error.code) {
-        case 'auth/email-already-in-use':
+        case 'auth/email-already-in-use': {
+          // A previous failed registration may have created the Firebase Auth account
+          // but never written the Firestore document (orphaned account).
+          // Try signing in — if no Firestore doc exists, complete the registration.
+          try {
+            const existing = await signInWithEmailAndPassword(auth, email, password);
+            const existingDoc = await getDoc(doc(db, 'users', existing.user.uid));
+            if (!existingDoc.exists()) {
+              await finaliseUser(existing.user.uid);
+              return null;
+            }
+          } catch {
+            // Wrong password or other sign-in error — genuine duplicate
+          }
           return 'Email already in use. Please sign in instead.';
+        }
         case 'auth/invalid-email':
           return 'Invalid email address format.';
         case 'auth/weak-password':
