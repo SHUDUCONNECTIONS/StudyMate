@@ -165,6 +165,54 @@ function App() {
     return unsubscribe;
   }, [currentUser?.id]);
 
+  // --- APPOINTMENT REMINDERS & AUTO-MISSED ---
+  // Parse "Monday 10:00" → nearest Date (this week's occurrence)
+  const getAppointmentDate = (timeStr: string): Date | null => {
+    const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const parts = timeStr.trim().split(' ');
+    if (parts.length !== 2) return null;
+    const dayIdx = DAYS.indexOf(parts[0]);
+    if (dayIdx === -1) return null;
+    const [h, m] = parts[1].split(':').map(Number);
+    if (isNaN(h) || isNaN(m)) return null;
+    const now = new Date();
+    const d = new Date(now);
+    d.setDate(now.getDate() + (dayIdx - now.getDay()));
+    d.setHours(h, m, 0, 0);
+    return d;
+  };
+
+  useEffect(() => {
+    if (!currentUser || bookings.length === 0) return;
+    const check = () => {
+      const now = new Date();
+      bookings.filter(b => b.status === 'upcoming').forEach(b => {
+        const appt = getAppointmentDate(b.time);
+        if (!appt) return;
+        const minsUntil = (appt.getTime() - now.getTime()) / 60000;
+        // 15-minute reminder (only once per booking)
+        if (minsUntil > 0 && minsUntil <= 15 && !b.reminderSent) {
+          updateDoc(doc(db, 'bookings', b.id), { reminderSent: true });
+          const learner = users.find(u => u.id === b.learnerId);
+          const counsellor = users.find(u => u.id === b.counsellorId);
+          addNotification(b.learnerId, 'Session in 15 minutes', `Your session with ${counsellor?.name || 'your counsellor'} starts soon. Get ready!`, 'booking');
+          addNotification(b.counsellorId, 'Session in 15 minutes', `Your session with ${b.anonymous ? 'an anonymous learner' : (learner?.name || 'a learner')} starts soon.`, 'booking');
+        }
+        // Auto-missed: appointment ended more than 1 hour ago
+        if (minsUntil < -60) {
+          updateDoc(doc(db, 'bookings', b.id), { status: 'missed' });
+          const learner = users.find(u => u.id === b.learnerId);
+          const counsellor = users.find(u => u.id === b.counsellorId);
+          addNotification(b.learnerId, 'Session Missed', `Your session with ${counsellor?.name || 'your counsellor'} was marked as missed.`, 'info');
+          addNotification(b.counsellorId, 'Session Missed', `The session with ${b.anonymous ? 'an anonymous learner' : (learner?.name || 'a learner')} was auto-marked as missed.`, 'info');
+        }
+      });
+    };
+    check();
+    const id = setInterval(check, 60_000);
+    return () => clearInterval(id);
+  }, [bookings, currentUser?.id]);
+
   // --- CHAT MESSAGES (real session) ---
   useEffect(() => {
     if (!activeSession) {

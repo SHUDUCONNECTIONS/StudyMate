@@ -121,6 +121,50 @@ export const DashboardPage = ({
   const [search, setSearch] = useState('');
   const [isManagingAvailability, setIsManagingAvailability] = useState(false);
 
+  // --- REAL-TIME CLOCK ---
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // --- APPOINTMENT HELPERS ---
+  const getApptDate = (timeStr: string): Date | null => {
+    const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const parts = timeStr.trim().split(' ');
+    if (parts.length !== 2) return null;
+    const dayIdx = DAYS.indexOf(parts[0]);
+    if (dayIdx === -1) return null;
+    const [h, m] = parts[1].split(':').map(Number);
+    if (isNaN(h) || isNaN(m)) return null;
+    const d = new Date(now);
+    d.setDate(now.getDate() + (dayIdx - now.getDay()));
+    d.setHours(h, m, 0, 0);
+    return d;
+  };
+
+  const formatApptLabel = (appt: Date) => {
+    const today = new Date(now); today.setHours(0,0,0,0);
+    const tomorrow = new Date(today); tomorrow.setDate(today.getDate()+1);
+    appt.setSeconds(0,0);
+    const timeStr = appt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (appt.toDateString() === today.toDateString()) return `Today · ${timeStr}`;
+    if (appt.toDateString() === tomorrow.toDateString()) return `Tomorrow · ${timeStr}`;
+    return `${appt.toLocaleDateString('en-ZA', { weekday:'short', day:'numeric', month:'short' })} · ${timeStr}`;
+  };
+
+  const formatTimeUntil = (appt: Date) => {
+    const diff = appt.getTime() - now.getTime();
+    const abs = Math.abs(diff);
+    const mins = Math.floor(abs / 60000);
+    const hrs  = Math.floor(abs / 3600000);
+    if (diff < 0) return mins < 60 ? `${mins}m ago` : `${hrs}h ago`;
+    if (mins < 1)  return 'Starting now!';
+    if (mins < 15) return `Starting in ${mins}m!`;
+    if (mins < 60) return `In ${mins} min`;
+    return `In ${hrs}h ${mins % 60}m`;
+  };
+
   // --- BREATHING EXERCISE ---
   const BREATH_PHASES = [
     { label: 'BREATHE IN',  duration: 4, color: 'bg-sky-400',    ring: 'border-sky-400',    text: 'text-sky-500',    large: true  },
@@ -183,19 +227,27 @@ export const DashboardPage = ({
             Welcome, <span className="text-brand-pink underline decoration-4 underline-offset-8 decoration-brand-teal">{user.name.split(' ')[0]}</span>.
           </h1>
           <p className="text-slate-500 font-bold mt-4 text-sm lg:text-base uppercase tracking-widest opacity-60">
-            {user.role === 'counsellor' && user.status !== 'approved' ? 'Profile pending administrator review.' : 
+            {user.role === 'counsellor' && user.status !== 'approved' ? 'Profile pending administrator review.' :
              user.role === 'learner' && user.department ? `${user.department} • Grade ${user.year}` :
              'Your wellness dashboard is live.'}
           </p>
         </div>
-        {user.role === 'counsellor' && user.status === 'approved' && (
-          <button 
-            onClick={() => setIsManagingAvailability(true)}
-            className="btn-pop-teal"
-          >
-            <Calendar size={16} /> Manage Availability
-          </button>
-        )}
+        <div className="flex flex-col items-end gap-3">
+          {/* Live clock */}
+          <div className="yandasm-pop-card bg-brand-dark text-white px-5 py-3 flex flex-col items-end border-2 border-black shadow-[4px_4px_0px_0px_#000]">
+            <span className="text-2xl font-display font-black tracking-tighter leading-none tabular-nums">
+              {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </span>
+            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/60 mt-0.5">
+              {now.toLocaleDateString('en-ZA', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            </span>
+          </div>
+          {user.role === 'counsellor' && user.status === 'approved' && (
+            <button onClick={() => setIsManagingAvailability(true)} className="btn-pop-teal">
+              <Calendar size={16} /> Manage Availability
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
@@ -390,75 +442,94 @@ export const DashboardPage = ({
 
           <div className="space-y-6">
             <h3 className="font-display font-black uppercase text-lg text-brand-dark tracking-widest px-2 flex items-center gap-3">
-              <span className="w-3 h-3 bg-brand-pink rounded-full" /> Active Sessions
+              <span className="w-3 h-3 bg-brand-pink rounded-full" /> Sessions
             </h3>
-            {userBookings.filter((b: any) => b.status === 'upcoming').length === 0 ? (
+            {userBookings.filter((b: any) => b.status === 'upcoming' || b.status === 'missed').length === 0 ? (
               <div className="yandasm-pop-card bg-brand-lavender/10 border-dashed border-2 flex flex-col items-center justify-center p-12 lg:p-16 text-slate-400">
                 <Calendar size={48} className="mb-4 text-brand-lavender animate-bounce" />
                 <p className="text-xs font-black uppercase tracking-[0.2em]">Rest is productive too. No sessions yet.</p>
               </div>
             ) : (
               <div className="space-y-4 lg:space-y-6">
-                {userBookings.filter((b: any) => b.status === 'upcoming').map((b: any, idx: number) => {
+                {userBookings.filter((b: any) => b.status === 'upcoming' || b.status === 'missed').map((b: any, idx: number) => {
                   const counterpart = users.find((u: any) => u.id === (user.role === 'learner' ? b.counsellorId : b.learnerId));
-                  const colors = ['bg-brand-blue', 'bg-brand-pink', 'bg-brand-teal', 'bg-brand-yellow'];
-                  const cardColor = colors[idx % colors.length];
+                  const appt = getApptDate(b.time);
+                  const timeUntil = appt ? formatTimeUntil(appt) : null;
+                  const apptLabel = appt ? formatApptLabel(new Date(appt)) : b.time;
+                  const isStartingSoon = appt && (appt.getTime() - now.getTime()) > 0 && (appt.getTime() - now.getTime()) < 900000;
+                  const isMissed = b.status === 'missed';
                   return (
-                    <div key={b.id} className="yandasm-pop-card flex flex-col sm:flex-row items-start sm:items-center justify-between group gap-6 bg-white hover:bg-slate-50">
+                    <div key={b.id} className={`yandasm-pop-card flex flex-col sm:flex-row items-start sm:items-center justify-between group gap-6 ${isMissed ? 'bg-red-50 border-red-200' : isStartingSoon ? 'bg-emerald-50 border-emerald-200' : 'bg-white hover:bg-slate-50'}`}>
                       <div className="flex items-center gap-6 w-full sm:w-auto">
                         <div className={`p-1 bg-white border-2 border-black rounded-2xl ${idx % 2 === 0 ? 'rotate-3' : '-rotate-3'} shrink-0 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]`}>
                           <img src={counterpart?.avatar} className="w-14 h-14 lg:w-16 lg:h-16 rounded-xl object-cover" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="font-display font-black text-brand-dark uppercase text-sm truncate">{b.anonymous && user.role === 'learner' ? 'Anonymous Session' : (b.anonymous && user.role === 'counsellor' ? 'Anonymous Learner' : counterpart?.name)}</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-display font-black text-brand-dark uppercase text-sm truncate">
+                              {b.anonymous && user.role === 'learner' ? 'Anonymous Session' : (b.anonymous && user.role === 'counsellor' ? 'Anonymous Learner' : counterpart?.name)}
+                            </p>
+                            {isMissed && <span className="text-[8px] font-black uppercase bg-red-500 text-white px-2 py-0.5 rounded-full">Missed</span>}
+                            {b.attended && <span className="text-[8px] font-black uppercase bg-emerald-500 text-white px-2 py-0.5 rounded-full">✓ Attended</span>}
+                            {isStartingSoon && <span className="text-[8px] font-black uppercase bg-emerald-500 text-white px-2 py-0.5 rounded-full animate-pulse">Starting soon!</span>}
+                          </div>
                           <div className="flex flex-wrap gap-2 mt-2">
-                             <span className="text-[10px] font-black bg-brand-lavender/30 text-brand-dark px-3 py-1 rounded-full border border-black/10 uppercase flex items-center gap-1 shadow-sm">
-                               <Clock size={10} /> {b.time}
-                             </span>
-                             {b.anonymous && (
-                               <span className="text-[10px] font-black bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full border border-emerald-200 uppercase flex items-center gap-1 shadow-sm">
-                                 <Shield size={10} /> Anon
-                               </span>
-                             )}
+                            <span className="text-[10px] font-black bg-brand-lavender/30 text-brand-dark px-3 py-1 rounded-full border border-black/10 uppercase flex items-center gap-1 shadow-sm">
+                              <Clock size={10} /> {apptLabel}
+                            </span>
+                            {timeUntil && !isMissed && (
+                              <span className={`text-[10px] font-black px-3 py-1 rounded-full border uppercase flex items-center gap-1 shadow-sm ${isStartingSoon ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
+                                {timeUntil}
+                              </span>
+                            )}
+                            {b.anonymous && (
+                              <span className="text-[10px] font-black bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full border border-emerald-200 uppercase flex items-center gap-1 shadow-sm">
+                                <Shield size={10} /> Anon
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 mt-4 sm:mt-0 w-full sm:w-auto flex-wrap">
-                        <button onClick={() => onJoinSess(b)} className="btn-pop-primary py-2 px-6 text-[10px] flex-1 sm:flex-none">Open Room</button>
-                        {user.role === 'counsellor' && !b.meetingLink && (
-                          <button 
-                            onClick={() => {
-                              const link = prompt('Enter meeting link for this session:', user.meetingLink || '');
-                              if (link) {
-                                onUpdateBooking(b.id, { meetingLink: link });
-                              }
-                            }}
-                            className="btn-pop-blue py-2 px-6 text-[10px]"
-                          >
-                            <Plus size={14} /> Link
-                          </button>
+                      <div className="flex flex-col gap-2 mt-4 sm:mt-0 w-full sm:w-auto">
+                        {/* Primary actions */}
+                        {!isMissed && (
+                          <div className="flex gap-2 flex-wrap">
+                            <button onClick={() => onJoinSess(b)} className="btn-pop-primary py-2 px-6 text-[10px] flex-1 sm:flex-none">Open Room</button>
+                            {user.role === 'counsellor' && !b.meetingLink && (
+                              <button onClick={() => { const link = prompt('Enter meeting link:', user.meetingLink || ''); if (link) onUpdateBooking(b.id, { meetingLink: link }); }} className="btn-pop-blue py-2 px-4 text-[10px]">
+                                <Plus size={14} /> Link
+                              </button>
+                            )}
+                            {((user.role === 'learner' && (b.meetingLink || counterpart?.meetingLink)) || (user.role === 'counsellor' && (b.meetingLink || user.meetingLink))) && (
+                              <a href={b.meetingLink || (user.role === 'learner' ? counterpart?.meetingLink : user.meetingLink)} target="_blank" rel="noopener noreferrer" className="btn-pop-teal py-2 px-4 text-[10px]">
+                                Video
+                              </a>
+                            )}
+                            <button onClick={() => { if (confirm('Cancel this session?')) onCancelBooking(b.id); }} className="btn-pop bg-red-400 text-white hover:bg-red-500 py-2 px-3 shadow-[2px_2px_0px_0px_#000] text-[10px]">
+                              <X size={14} />
+                            </button>
+                          </div>
                         )}
-                        {((user.role === 'learner' && (b.meetingLink || counterpart?.meetingLink)) || (user.role === 'counsellor' && (b.meetingLink || user.meetingLink))) && (
-                          <a 
-                            href={b.meetingLink || (user.role === 'learner' ? counterpart?.meetingLink : user.meetingLink)} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="btn-pop-teal py-2 px-6 text-[10px]"
-                          >
-                            Video
-                          </a>
+                        {/* Counsellor attendance actions */}
+                        {user.role === 'counsellor' && !b.attended && (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => onUpdateBooking(b.id, { attended: true, status: 'completed' })}
+                              className="flex-1 py-2 px-4 bg-emerald-500 text-white border-2 border-black rounded-xl text-[10px] font-black uppercase shadow-[2px_2px_0px_0px_#000] hover:bg-emerald-600 flex items-center justify-center gap-1"
+                            >
+                              <Check size={12} /> Mark Attended
+                            </button>
+                            {!isMissed && (
+                              <button
+                                onClick={() => { if (confirm('Mark this session as missed?')) onUpdateBooking(b.id, { status: 'missed' }); }}
+                                className="flex-1 py-2 px-4 bg-red-100 text-red-600 border-2 border-red-300 rounded-xl text-[10px] font-black uppercase hover:bg-red-200 flex items-center justify-center gap-1"
+                              >
+                                <X size={12} /> Appointment Missed
+                              </button>
+                            )}
+                          </div>
                         )}
-                        <button 
-                            onClick={() => {
-                              if (confirm('Are you sure you want to cancel this session?')) {
-                                onCancelBooking(b.id);
-                              }
-                            }}
-                            className="btn-pop bg-red-400 text-white hover:bg-red-500 py-2 px-4 shadow-[2px_2px_0px_0px_#000] text-[10px]"
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
+                      </div>
                     </div>
                   );
                 })}

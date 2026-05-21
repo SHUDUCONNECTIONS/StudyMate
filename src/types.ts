@@ -56,10 +56,12 @@ export interface Booking {
   learnerId: string;
   counsellorId: string;
   time: string;
-  status: 'upcoming' | 'completed' | 'cancelled';
+  status: 'upcoming' | 'completed' | 'cancelled' | 'missed';
   anonymous: boolean;
   rating?: number;
   meetingLink?: string;
+  attended?: boolean;
+  reminderSent?: boolean;
 }
 
 export interface Message {
