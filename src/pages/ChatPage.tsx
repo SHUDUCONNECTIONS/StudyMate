@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { PhoneCall, Smile, Shield, CheckCircle2, Send, Flag, AlertTriangle } from 'lucide-react';
+import { PhoneCall, Smile, Shield, CheckCircle2, Send, Flag, AlertTriangle, ChevronLeft } from 'lucide-react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { User, Message, Booking } from '../types';
@@ -17,13 +17,14 @@ interface ChatPageProps {
   session: Booking | null;
   onFinish: (bookingId: string, rating: number) => void;
   onReport: (sessionId: string, reason: string, details: string) => Promise<void>;
+  onBack: () => void;
   scrollRef: React.RefObject<HTMLDivElement>;
   onUpdateUser?: (user: User) => void;
 }
 
 export const ChatPage = ({
   user, users, messages, chatInput, setChatInput,
-  onSend, isLoading, session, onFinish, onReport, scrollRef, onUpdateUser
+  onSend, isLoading, session, onFinish, onReport, onBack, scrollRef, onUpdateUser
 }: ChatPageProps) => {
   const [isRating, setIsRating] = useState(false);
   const [isReporting, setIsReporting] = useState(false);
@@ -74,7 +75,15 @@ export const ChatPage = ({
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full max-w-4xl mx-auto flex flex-col">
       <div className="flex items-center justify-between mb-4 md:mb-6 shrink-0 gap-2 md:gap-4 px-1">
-        <div className="flex items-center gap-3 md:gap-4 min-w-0">
+        <div className="flex items-center gap-2 md:gap-4 min-w-0">
+          {/* Back button */}
+          <button
+            onClick={onBack}
+            className="shrink-0 p-2 md:p-2.5 bg-white border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_#000] hover:bg-slate-50 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all"
+            aria-label="Back"
+          >
+            <ChevronLeft size={18} />
+          </button>
           {/* Avatar */}
           <div className="shrink-0 relative">
             {isAnonymousView ? (

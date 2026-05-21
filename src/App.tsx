@@ -48,8 +48,6 @@ import { ChatPage } from './pages/ChatPage';
 import { EmergencyPage } from './pages/EmergencyPage';
 import { ResourcesPage } from './pages/ResourcesPage';
 
-// Services
-import { generateWellnessResponse } from './lib/gemini';
 
 function App() {
   const navigate = useNavigate();
@@ -566,31 +564,17 @@ function App() {
     };
     setChatInput('');
 
-    if (activeSession) {
-      // Optimistic update — sender sees message instantly; onSnapshot syncs for both parties
-      setMessages(prev => [...prev, userMsg]);
-      try {
-        await addDoc(collection(db, 'chats', activeSession.id, 'messages'), userMsg);
-      } catch (err: any) {
-        console.error('Message send failed:', err);
-        // Remove optimistic message and show error
-        setMessages(prev => [
-          ...prev.filter(m => m.id !== userMsg.id),
-          { role: 'system', content: 'Message failed to send. Please try again.', id: 'send-err-' + Date.now(), timestamp: Date.now() },
-        ]);
-      }
-    } else {
-      setMessages(prev => [...prev, userMsg]);
-      setIsLoading(true);
-      try {
-        const response = await generateWellnessResponse([...messages, userMsg]);
-        const assistantMsg: Message = { role: 'assistant', content: response || "...", id: Math.random().toString(36), timestamp: Date.now() };
-        setMessages(prev => [...prev, assistantMsg]);
-      } catch {
-        setMessages(prev => [...prev, { role: 'system', content: "Connection lost. Please try again.", id: 'err', timestamp: Date.now() }]);
-      } finally {
-        setIsLoading(false);
-      }
+    if (!activeSession) return;
+    // Optimistic update — sender sees message instantly; onSnapshot syncs for both parties
+    setMessages(prev => [...prev, userMsg]);
+    try {
+      await addDoc(collection(db, 'chats', activeSession.id, 'messages'), userMsg);
+    } catch (err: any) {
+      console.error('Message send failed:', err);
+      setMessages(prev => [
+        ...prev.filter(m => m.id !== userMsg.id),
+        { role: 'system', content: 'Message failed to send. Please try again.', id: 'send-err-' + Date.now(), timestamp: Date.now() },
+      ]);
     }
   };
 
@@ -695,7 +679,6 @@ function App() {
 
         <nav className="flex-1 px-4 space-y-3 overflow-y-auto no-scrollbar">
           <SidebarItem icon={Home} label="Dashboard" active={currentView === 'Dashboard'} onClick={() => { navigate('/dashboard'); setIsSidebarOpen(false); }} activeColor="bg-brand-blue" />
-          {currentUser.role === 'learner' && <SidebarItem icon={MessageSquare} label="Wellness Chat" active={currentView === 'Chat'} onClick={() => { setMessages([]); setActiveSession(null); navigate('/chat'); setIsSidebarOpen(false); }} activeColor="bg-brand-pink" />}
           <SidebarItem icon={Calendar} label="My Sessions" active={currentView === 'Sessions'} onClick={() => { navigate('/sessions'); setIsSidebarOpen(false); }} activeColor="bg-brand-teal" />
           <SidebarItem icon={Gamepad2} label="Mental Games" active={currentView === 'Game'} onClick={() => { navigate('/games'); setIsSidebarOpen(false); }} activeColor="bg-brand-yellow" />
           <SidebarItem icon={UserIcon} label="My Profile" active={currentView === 'Profile'} onClick={() => { navigate('/profile'); setIsSidebarOpen(false); }} activeColor="bg-brand-orange" />
@@ -768,7 +751,7 @@ function App() {
                 <Route path="/sessions" element={<SessionsPage user={currentUser} users={users} bookings={bookings} onJoinSession={(b) => { setActiveSession(b); navigate('/chat'); }} />} />
                 <Route path="/admin" element={<AdminPage users={users} onApprove={handleApprove} onAddCounsellor={handleAddCounsellor} bookings={bookings} notifications={notifications} onDownloadPDF={downloadPopiaPDF} />} />
                 <Route path="/profile" element={<ProfilePage user={currentUser} onUpdate={handleUpdateProfile} onLogout={() => signOut(auth)} />} />
-                <Route path="/chat" element={<ChatPage user={currentUser} users={users} messages={messages} chatInput={chatInput} setChatInput={setChatInput} onSend={handleSendChat} isLoading={isLoading} session={activeSession} onFinish={(id: string, rating: number) => submitRating(id, rating)} onReport={handleReport} scrollRef={scrollRef} onUpdateUser={handleUpdateProfile} />} />
+                <Route path="/chat" element={<ChatPage user={currentUser} users={users} messages={messages} chatInput={chatInput} setChatInput={setChatInput} onSend={handleSendChat} isLoading={false} session={activeSession} onFinish={(id: string, rating: number) => submitRating(id, rating)} onReport={handleReport} onBack={() => navigate('/dashboard')} scrollRef={scrollRef} onUpdateUser={handleUpdateProfile} />} />
                 <Route path="/emergency" element={<EmergencyPage />} />
                 <Route path="/resources" element={<ResourcesPage />} />
                 <Route path="/games" element={<GameHubPage onSelect={(g) => { setActiveGame(g); setShowGame(true); }} />} />

@@ -236,6 +236,47 @@ export const DashboardPage = ({
             </div>
           )}
 
+          {user.role === 'learner' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between px-2">
+                <h3 className="font-display font-black uppercase text-lg text-brand-dark tracking-widest flex items-center gap-3">
+                  <span className="w-3 h-3 bg-brand-teal rounded-full" /> Verified Care
+                </h3>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {approvedCounsellors.filter((c: any) => c.specialty?.toLowerCase().includes(search.toLowerCase())).map((c: any, cid: number) => {
+                  const colors = ['bg-brand-blue/5', 'bg-brand-orange/5', 'bg-brand-teal/5', 'bg-brand-lavender/5'];
+                  return (
+                    <div key={c.id} className={`yandasm-pop-card flex flex-col group ${colors[cid % colors.length]} hover:-translate-y-1 transition-all`}>
+                      <div className="flex gap-4 items-start mb-6">
+                        <div className={`p-1 bg-white border-2 border-black rounded-2xl ${cid % 2 === 0 ? 'rotate-[-3deg]' : 'rotate-[3deg]'} shrink-0 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]`}>
+                          <img src={c.avatar} className="w-16 h-16 rounded-xl object-cover" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-display font-black text-brand-dark text-base truncate uppercase">{c.name}</p>
+                          <p className="text-[10px] font-black text-brand-dark bg-white inline-block px-3 py-1 rounded-full border-2 border-black mt-2 uppercase truncate shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">{c.specialty}</p>
+                          <div className="flex items-center gap-1 mt-3">
+                            <Star size={10} className="text-brand-yellow fill-brand-yellow" />
+                            <span className="text-[10px] font-black text-brand-dark/60 uppercase">{c.rating?.toFixed(1) || 'NEW'} RATING</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <button onClick={() => setSelectedCounsellor(c)} className="flex-1 btn-pop-primary py-3 font-display">Book Session</button>
+                        <button
+                          onClick={() => onToggleTrust(c.id)}
+                          className={`p-3 rounded-2xl border-2 border-black transition-all ${user.trustedCounsellors?.includes(c.id) ? 'bg-brand-orange text-white shadow-none translate-x-1 translate-y-1' : 'bg-white text-slate-400 hover:text-brand-orange shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'}`}
+                        >
+                          <Heart size={20} className={user.trustedCounsellors?.includes(c.id) ? 'fill-current' : ''} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {user.role === 'counsellor' && trustingLearners.length > 0 && (
             <div className="space-y-6">
               <h3 className="font-display font-black uppercase text-lg text-brand-dark tracking-widest px-2 flex items-center gap-3">
@@ -425,46 +466,6 @@ export const DashboardPage = ({
             )}
           </div>
 
-          {user.role === 'learner' && (
-            <div className="space-y-6 pt-6">
-              <div className="flex items-center justify-between px-2">
-                <h3 className="font-display font-black uppercase text-lg text-brand-dark tracking-widest flex items-center gap-3">
-                  <span className="w-3 h-3 bg-brand-teal rounded-full" /> Verified Care
-                </h3>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {approvedCounsellors.filter((c: any) => c.specialty?.toLowerCase().includes(search.toLowerCase())).map((c: any, cid: number) => {
-                  const colors = ['bg-brand-blue/5', 'bg-brand-orange/5', 'bg-brand-teal/5', 'bg-brand-lavender/5'];
-                  return (
-                    <div key={c.id} className={`yandasm-pop-card flex flex-col group ${colors[cid % colors.length]} hover:-translate-y-1 transition-all`}>
-                      <div className="flex gap-4 items-start mb-6">
-                        <div className={`p-1 bg-white border-2 border-black rounded-2xl ${cid % 2 === 0 ? 'rotate-[-3deg]' : 'rotate-[3deg]'} shrink-0 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]`}>
-                          <img src={c.avatar} className="w-16 h-16 rounded-xl object-cover" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-display font-black text-brand-dark text-base truncate uppercase">{c.name}</p>
-                          <p className="text-[10px] font-black text-brand-dark bg-white inline-block px-3 py-1 rounded-full border-2 border-black mt-2 uppercase truncate shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">{c.specialty}</p>
-                          <div className="flex items-center gap-1 mt-3">
-                             <Star size={10} className="text-brand-yellow fill-brand-yellow" />
-                             <span className="text-[10px] font-black text-brand-dark/60 uppercase">{c.rating?.toFixed(1) || 'NEW'} RATING</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex gap-3">
-                        <button onClick={() => setSelectedCounsellor(c)} className="flex-1 btn-pop-primary py-3 font-display">Book Session</button>
-                        <button 
-                          onClick={() => onToggleTrust(c.id)} 
-                          className={`p-3 rounded-2xl border-2 border-black transition-all ${user.trustedCounsellors?.includes(c.id) ? 'bg-brand-orange text-white shadow-none translate-x-1 translate-y-1' : 'bg-white text-slate-400 hover:text-brand-orange shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'}`}
-                        >
-                          <Heart size={20} className={user.trustedCounsellors?.includes(c.id) ? 'fill-current' : ''} />
-                        </button>
-                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
         </div>
 
         <div className="md:col-span-4 space-y-8">
@@ -477,7 +478,7 @@ export const DashboardPage = ({
                 <Wind size={18} className="text-sky-300" />
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-white/50">Deep Breathing</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-white/70">Deep Breathing</p>
                 <h4 className="font-display font-black uppercase italic text-white text-lg leading-none tracking-tighter">Vibe Reset</h4>
               </div>
               {breathing && (
@@ -546,9 +547,9 @@ export const DashboardPage = ({
                 </div>
               ) : (
                 <div className="text-center space-y-4">
-                  <div className="text-[11px] font-bold text-white/50 leading-relaxed space-y-1">
+                  <div className="text-[11px] font-bold text-white/80 leading-relaxed space-y-2">
                     <p>4s <span className="text-sky-300 font-black">inhale</span> → 4s <span className="text-brand-yellow font-black">hold</span> → 4s <span className="text-brand-teal font-black">exhale</span> → 4s <span className="text-purple-300 font-black">hold</span></p>
-                    <p className="text-white/30 text-[9px]">Repeat × {TOTAL_ROUNDS} rounds • Calms your nervous system</p>
+                    <p className="text-white/60 text-[10px]">Repeat × {TOTAL_ROUNDS} rounds • Calms your nervous system</p>
                   </div>
                   <motion.button
                     whileTap={{ scale: 0.95 }}
