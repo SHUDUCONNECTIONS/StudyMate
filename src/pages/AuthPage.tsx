@@ -2,8 +2,8 @@
 import React, { useState, useRef, useCallback, ChangeEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import SignatureCanvas from 'react-signature-canvas';
-import { 
-  ChevronLeft, AlertCircle, CheckCircle2, Shield, User as UserIcon, ChevronRight
+import {
+  ChevronLeft, AlertCircle, CheckCircle2, Shield, User as UserIcon, ChevronRight, Eye, EyeOff, Loader2
 } from 'lucide-react';
 import { YandasmLogo } from '../components/YandasmLogo';
 import { UserRole, PopiaData } from '../types';
@@ -23,6 +23,8 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
   const [isLogin, setIsLogin] = useState(true);
   const [step, setStep] = useState(1);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const sigCanvas = useRef<any>(null);
   // Patch the canvas getContext before react-signature-canvas initialises it in
   // componentDidMount, so the context is created with willReadFrequently: true.
@@ -180,11 +182,21 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
                 className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 text-sm font-bold focus:border-sky-600 outline-none"
                 value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})}
               />
-              <input 
-                type="password" placeholder="Password" 
-                className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 text-sm font-bold focus:border-sky-600 outline-none"
-                value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Password"
+                  className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 pr-12 text-sm font-bold focus:border-sky-600 outline-none"
+                  value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(p => !p)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
               {!isLogin && (
                 <>
                   <select
@@ -269,11 +281,14 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
                   )}
                 </>
               )}
-              <button 
+              <button
+                disabled={loading}
                 onClick={async () => {
                   setError(null);
                   if (isLogin) {
+                    setLoading(true);
                     const err = await onLogin(formData.email, formData.password);
+                    setLoading(false);
                     if (err) setError(err);
                   } else {
                     if (!formData.name || !formData.email || !formData.password) {
@@ -291,9 +306,16 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
                     setStep(2);
                   }
                 }}
-                className="w-full btn-primary mt-4"
+                className="w-full btn-primary mt-4 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {isLogin ? 'Enter Workspace' : 'Next: POPIA Consent'}
+                {loading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Signing in…
+                  </>
+                ) : (
+                  isLogin ? 'Enter Workspace' : 'Next: POPIA Consent'
+                )}
               </button>
             </>
           ) : (
@@ -414,26 +436,33 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
                   const signature = sigCanvas.current.getCanvas().toDataURL('image/png');
                   const finalPopia = { ...popiaData, popiaSignature: signature };
 
+                  setLoading(true);
                   const err = await onRegister(
-                    formData.name, 
-                    formData.email, 
-                    formData.password, 
-                    formData.role, 
-                    formData.specialty, 
-                    formData.department, 
-                    formData.year, 
-                    formData.qualifications, 
-                    formData.gender, 
-                    formData.avatarSeed, 
-                    formData.cvFileName, 
+                    formData.name,
+                    formData.email,
+                    formData.password,
+                    formData.role,
+                    formData.specialty,
+                    formData.department,
+                    formData.year,
+                    formData.qualifications,
+                    formData.gender,
+                    formData.avatarSeed,
+                    formData.cvFileName,
                     formData.profilePhoto,
                     finalPopia
                   );
+                  setLoading(false);
                   if (err) setError(err);
                 }}
-                className="w-full btn-pop-teal mt-8 py-5 text-sm uppercase font-black"
+                disabled={loading}
+                className="w-full btn-pop-teal mt-8 py-5 text-sm uppercase font-black flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Submit & Complete Registration
+                {loading ? (
+                  <><Loader2 size={16} className="animate-spin" /> Creating Account…</>
+                ) : (
+                  'Submit & Complete Registration'
+                )}
               </button>
             </div>
           )}
