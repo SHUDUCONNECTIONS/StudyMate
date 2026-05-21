@@ -123,10 +123,10 @@ export const DashboardPage = ({
 
   // --- BREATHING EXERCISE ---
   const BREATH_PHASES = [
-    { label: 'BREATHE IN',  duration: 4, color: 'bg-sky-400',      ring: 'border-sky-400',      text: 'text-sky-300',      large: true  },
-    { label: 'HOLD',        duration: 4, color: 'bg-brand-yellow',  ring: 'border-brand-yellow', text: 'text-brand-yellow', large: true  },
-    { label: 'BREATHE OUT', duration: 4, color: 'bg-brand-teal',    ring: 'border-brand-teal',   text: 'text-brand-teal',   large: false },
-    { label: 'HOLD',        duration: 4, color: 'bg-brand-lavender',ring: 'border-purple-400',   text: 'text-purple-300',   large: false },
+    { label: 'BREATHE IN',  duration: 4, color: 'bg-sky-400',    ring: 'border-sky-400',    text: 'text-sky-500',    large: true  },
+    { label: 'HOLD',        duration: 4, color: 'bg-amber-400',  ring: 'border-amber-400',  text: 'text-amber-500',  large: true  },
+    { label: 'BREATHE OUT', duration: 4, color: 'bg-teal-500',   ring: 'border-teal-400',   text: 'text-teal-600',   large: false },
+    { label: 'HOLD',        duration: 4, color: 'bg-purple-400', ring: 'border-purple-400', text: 'text-purple-600', large: false },
   ] as const;
   const TOTAL_ROUNDS = 4;
   const [breathing, setBreathing] = useState(false);
@@ -469,54 +469,51 @@ export const DashboardPage = ({
         </div>
 
         <div className="md:col-span-4 space-y-8">
-          <div className="yandasm-pop-card bg-brand-dark text-white flex flex-col overflow-hidden relative border-4 border-black min-h-[340px]">
-            <Sparkles className="absolute -right-8 -top-8 w-40 h-40 text-white/5" strokeWidth={1} />
+          <div className="yandasm-pop-card flex flex-col overflow-hidden relative border-4 border-black min-h-[340px] bg-white">
 
             {/* Header */}
-            <div className="flex items-center gap-3 p-6 pb-0 relative z-10">
-              <div className="w-10 h-10 bg-white/10 border border-white/20 rounded-2xl flex items-center justify-center">
-                <Wind size={18} className="text-sky-300" />
+            <div className="flex items-center gap-3 p-6 pb-4 border-b-2 border-slate-100">
+              <div className="w-10 h-10 bg-sky-100 border-2 border-black rounded-2xl flex items-center justify-center shadow-[2px_2px_0px_0px_#000]">
+                <Wind size={18} className="text-sky-500" />
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-white/70">Deep Breathing</p>
-                <h4 className="font-display font-black uppercase italic text-white text-lg leading-none tracking-tighter">Vibe Reset</h4>
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">Deep Breathing</p>
+                <h4 className="font-display font-black uppercase italic text-brand-dark text-lg leading-none tracking-tighter">Vibe Reset</h4>
               </div>
               {breathing && (
-                <span className="ml-auto text-[9px] font-black uppercase tracking-widest bg-white/10 px-3 py-1 rounded-full text-white/60">
+                <span className="ml-auto text-[9px] font-black uppercase tracking-widest bg-slate-100 border border-slate-200 px-3 py-1 rounded-full text-slate-500">
                   Round {bRound}/{TOTAL_ROUNDS}
                 </span>
               )}
             </div>
 
             {/* Content */}
-            <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
+            <div className="flex-1 flex flex-col items-center justify-center p-6">
               {breathDone ? (
                 <div className="text-center space-y-4">
-                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mx-auto border-4 border-white shadow-[0_0_30px_rgba(16,185,129,0.5)]">
+                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mx-auto border-4 border-black shadow-[4px_4px_0px_0px_#000]">
                     <Check size={36} className="text-white" />
                   </motion.div>
-                  <p className="font-display font-black uppercase italic text-2xl text-white">Well Done!</p>
-                  <p className="text-sm text-white/60 font-bold">{TOTAL_ROUNDS} rounds complete. How do you feel? 💚</p>
-                  <button onClick={startBreathing} className="mt-2 px-6 py-2 bg-white/10 border border-white/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-white/20 transition-all">
+                  <p className="font-display font-black uppercase italic text-2xl text-brand-dark">Well Done!</p>
+                  <p className="text-sm text-slate-500 font-bold">{TOTAL_ROUNDS} rounds complete. How do you feel? 💚</p>
+                  <button onClick={startBreathing} className="mt-2 px-6 py-2 bg-slate-100 border-2 border-black rounded-xl text-[10px] font-black uppercase tracking-widest text-brand-dark hover:bg-brand-yellow transition-all shadow-[2px_2px_0px_0px_#000]">
                     Go Again
                   </button>
                 </div>
               ) : breathing ? (
-                <div className="flex flex-col items-center gap-5 w-full">
+                <div className="flex flex-col items-center gap-4 w-full">
                   {/* Animated circle */}
-                  <div className="relative flex items-center justify-center">
-                    {/* Outer pulse ring */}
+                  <div className="relative flex items-center justify-center" style={{ minHeight: 140 }}>
                     <motion.div
                       key={`ring-${bPhase}-${bRound}`}
-                      className={`absolute rounded-full border-4 ${BREATH_PHASES[bPhase].ring} opacity-30`}
+                      className={`absolute rounded-full border-4 ${BREATH_PHASES[bPhase].ring} opacity-20`}
                       initial={{ width: 80, height: 80 }}
                       animate={{ width: BREATH_PHASES[bPhase].large ? 160 : 80, height: BREATH_PHASES[bPhase].large ? 160 : 80 }}
                       transition={{ duration: BREATH_PHASES[bPhase].duration, ease: 'easeInOut' }}
                     />
-                    {/* Main circle */}
                     <motion.div
                       key={`circle-${bPhase}-${bRound}`}
-                      className={`rounded-full ${BREATH_PHASES[bPhase].color} flex items-center justify-center shadow-[0_0_40px_rgba(255,255,255,0.15)]`}
+                      className={`rounded-full ${BREATH_PHASES[bPhase].color} flex items-center justify-center border-4 border-black shadow-[4px_4px_0px_0px_#000]`}
                       initial={{ width: BREATH_PHASES[bPhase].large ? 80 : 120, height: BREATH_PHASES[bPhase].large ? 80 : 120 }}
                       animate={{ width: BREATH_PHASES[bPhase].large ? 120 : 80, height: BREATH_PHASES[bPhase].large ? 120 : 80 }}
                       transition={{ duration: BREATH_PHASES[bPhase].duration, ease: 'easeInOut' }}
@@ -525,7 +522,6 @@ export const DashboardPage = ({
                     </motion.div>
                   </div>
 
-                  {/* Phase label */}
                   <motion.p
                     key={`label-${bPhase}`}
                     initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
@@ -534,27 +530,31 @@ export const DashboardPage = ({
                     {BREATH_PHASES[bPhase].label}
                   </motion.p>
 
-                  {/* Round dots */}
                   <div className="flex gap-2">
                     {Array.from({ length: TOTAL_ROUNDS }).map((_, i) => (
-                      <div key={i} className={`w-2 h-2 rounded-full transition-all ${i < bRound ? 'bg-white' : 'bg-white/20'}`} />
+                      <div key={i} className={`w-2.5 h-2.5 rounded-full border-2 border-black transition-all ${i < bRound ? 'bg-brand-dark' : 'bg-slate-100'}`} />
                     ))}
                   </div>
 
-                  <button onClick={stopBreathing} className="text-[9px] font-black uppercase tracking-widest text-white/30 hover:text-white/60 transition-all mt-1">
+                  <button onClick={stopBreathing} className="text-[9px] font-black uppercase tracking-widest text-slate-300 hover:text-slate-500 transition-all">
                     Stop
                   </button>
                 </div>
               ) : (
-                <div className="text-center space-y-4">
-                  <div className="text-[11px] font-bold text-white/80 leading-relaxed space-y-2">
-                    <p>4s <span className="text-sky-300 font-black">inhale</span> → 4s <span className="text-brand-yellow font-black">hold</span> → 4s <span className="text-brand-teal font-black">exhale</span> → 4s <span className="text-purple-300 font-black">hold</span></p>
-                    <p className="text-white/60 text-[10px]">Repeat × {TOTAL_ROUNDS} rounds • Calms your nervous system</p>
+                <div className="text-center space-y-5 w-full">
+                  <div className="bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 space-y-1.5">
+                    <p className="text-[11px] font-bold text-slate-700">
+                      4s <span className="text-sky-500 font-black">inhale</span>
+                      {' → '}4s <span className="text-amber-500 font-black">hold</span>
+                      {' → '}4s <span className="text-teal-500 font-black">exhale</span>
+                      {' → '}4s <span className="text-purple-500 font-black">hold</span>
+                    </p>
+                    <p className="text-slate-400 text-[10px] font-bold">Repeat × {TOTAL_ROUNDS} rounds • Calms your nervous system</p>
                   </div>
                   <motion.button
                     whileTap={{ scale: 0.95 }}
                     onClick={startBreathing}
-                    className="w-full py-4 bg-white text-brand-dark font-display font-black uppercase text-base rounded-2xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)] hover:bg-brand-yellow transition-all"
+                    className="w-full py-4 bg-brand-dark text-white font-display font-black uppercase text-base rounded-2xl border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:bg-sky-800 transition-all"
                   >
                     Start Breathing 🧘‍♂️
                   </motion.button>
