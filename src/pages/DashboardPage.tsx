@@ -144,13 +144,14 @@ export const DashboardPage = ({
   };
 
   const formatApptLabel = (appt: Date) => {
-    const today = new Date(now); today.setHours(0,0,0,0);
-    const tomorrow = new Date(today); tomorrow.setDate(today.getDate()+1);
-    appt.setSeconds(0,0);
-    const timeStr = appt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    if (appt.toDateString() === today.toDateString()) return `Today · ${timeStr}`;
-    if (appt.toDateString() === tomorrow.toDateString()) return `Tomorrow · ${timeStr}`;
-    return `${appt.toLocaleDateString('en-ZA', { weekday:'short', day:'numeric', month:'short' })} · ${timeStr}`;
+    const timeStr  = appt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const dayName  = appt.toLocaleDateString('en-US', { weekday: 'long' });
+    const dateTag  = `${appt.getDate()} ${appt.toLocaleDateString('en-US', { month: 'short' })}`;
+    const today    = new Date(now); today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+    if (appt.toDateString() === today.toDateString())    return `Today · ${timeStr} · ${dateTag}`;
+    if (appt.toDateString() === tomorrow.toDateString()) return `Tomorrow · ${timeStr} · ${dateTag}`;
+    return `${dayName} · ${timeStr} · ${dateTag}`;
   };
 
   const formatTimeUntil = (appt: Date) => {

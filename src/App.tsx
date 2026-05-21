@@ -553,6 +553,16 @@ function App() {
     );
   };
 
+  // Format "Monday 10:00" → "Monday 10:00 · 27 May" for use in notifications
+  const formatBookingTime = (timeStr: string): string => {
+    const appt = getAppointmentDate(timeStr);
+    if (!appt) return timeStr;
+    const day  = appt.toLocaleDateString('en-US', { weekday: 'long' });
+    const time = appt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const date = `${appt.getDate()} ${appt.toLocaleDateString('en-US', { month: 'short' })}`;
+    return `${day} ${time} · ${date}`;
+  };
+
   const handleBook = async (counsellorId: string, time: string, isAnon: boolean) => {
     if (!currentUser) return;
     const bookingRef = doc(collection(db, 'bookings'));
@@ -569,7 +579,7 @@ function App() {
     await addNotification(
       counsellorId,
       'New Session Booked',
-      `A session for ${time} has been booked. ${isAnon ? 'Anonymous entry.' : `Student: ${currentUser.name}`}`,
+      `A session for ${formatBookingTime(time)} has been booked. ${isAnon ? 'Anonymous entry.' : `Student: ${currentUser.name}`}`,
       'booking'
     );
 
@@ -591,9 +601,9 @@ function App() {
     const counsellor = users.find(u => u.id === booking.counsellorId);
     if (learner && counsellor) {
       if (currentUser?.id === learner.id) {
-        await addNotification(counsellor.id, 'Session Cancelled', `The session on ${booking.time} has been cancelled by the student.`, 'booking');
+        await addNotification(counsellor.id, 'Session Cancelled', `The session on ${formatBookingTime(booking.time)} has been cancelled by the student.`, 'booking');
       } else {
-        await addNotification(learner.id, 'Session Cancelled', `Your session on ${booking.time} has been cancelled by the counsellor.`, 'booking');
+        await addNotification(learner.id, 'Session Cancelled', `Your session on ${formatBookingTime(booking.time)} has been cancelled by the counsellor.`, 'booking');
       }
     }
 

@@ -14,6 +14,40 @@ interface SessionsPageProps {
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const TIMES = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
 
+// Parse "Monday 10:00" → absolute Date for this week
+const parseSlotDate = (timeStr: string): Date | null => {
+  const parts = timeStr.trim().split(' ');
+  if (parts.length !== 2) return null;
+  const dayIdx = DAYS.indexOf(parts[0]);
+  if (dayIdx === -1) return null;
+  const [h, m] = parts[1].split(':').map(Number);
+  if (isNaN(h) || isNaN(m)) return null;
+  const now = new Date();
+  const dow = now.getDay();
+  // Monday-based index: DAYS[0]=Monday → JS getDay()=1
+  const jsDayIdx = (dayIdx + 1) % 7; // convert Mon=0 → Mon=1
+  let diff = jsDayIdx - dow;
+  if (diff < 0) diff += 7;
+  const d = new Date(now);
+  d.setDate(now.getDate() + diff);
+  d.setHours(h, m, 0, 0);
+  return d;
+};
+
+const formatSlotLabel = (timeStr: string): string => {
+  const appt = parseSlotDate(timeStr);
+  if (!appt) return timeStr;
+  const now = new Date();
+  const today    = new Date(now); today.setHours(0,0,0,0);
+  const tomorrow = new Date(today); tomorrow.setDate(today.getDate()+1);
+  const timeDisplay = appt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const dateTag  = `${appt.getDate()} ${appt.toLocaleDateString('en-US', { month: 'short' })}`;
+  const dayName  = appt.toLocaleDateString('en-US', { weekday: 'long' });
+  if (appt.toDateString() === today.toDateString())    return `Today · ${timeDisplay} · ${dateTag}`;
+  if (appt.toDateString() === tomorrow.toDateString()) return `Tomorrow · ${timeDisplay} · ${dateTag}`;
+  return `${dayName} · ${timeDisplay} · ${dateTag}`;
+};
+
 export const SessionsPage = ({ user, users, bookings, onJoinSession }: SessionsPageProps) => {
   const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
 
@@ -76,8 +110,8 @@ export const SessionsPage = ({ user, users, bookings, onJoinSession }: SessionsP
                     <p className="font-display font-black text-sm uppercase truncate">
                       {b.anonymous && user.role === 'counsellor' ? 'Anonymous' : (cp?.name || 'Session')}
                     </p>
-                    <p className="text-[10px] font-black text-brand-teal uppercase tracking-widest mt-0.5 flex items-center gap-1">
-                      <Clock size={8} /> {b.time}
+                    <p className="text-[10px] font-black text-brand-teal uppercase tracking-widest mt-0.5 flex items-center gap-1 flex-wrap">
+                      <Clock size={8} /> {formatSlotLabel(b.time)}
                     </p>
                   </div>
                   <button className="btn-pop-teal py-2 px-4 text-[10px] shrink-0 flex items-center gap-1">
