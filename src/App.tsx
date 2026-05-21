@@ -476,7 +476,23 @@ function App() {
 
   const handleUpdateAvailability = (slots: string[]) => {
     if (!currentUser) return;
-    handleUpdateProfile({ ...currentUser, availableSlots: slots });
+    // Never persist past slots — filter them out before saving
+    const futureSlots = slots.filter(slot => {
+      const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      const parts = slot.trim().split(' ');
+      if (parts.length !== 2) return false;
+      const dayIdx = DAYS.indexOf(parts[0]);
+      if (dayIdx === -1) return false;
+      const [h, m] = parts[1].split(':').map(Number);
+      if (isNaN(h) || isNaN(m)) return false;
+      const now = new Date();
+      const diff = now.getDay() === 0 ? -6 : 1 - now.getDay();
+      const d = new Date(now);
+      d.setDate(now.getDate() + diff + dayIdx);
+      d.setHours(h, m, 0, 0);
+      return d > now;
+    });
+    handleUpdateProfile({ ...currentUser, availableSlots: futureSlots });
   };
 
   const handleLogin = async (email: string, password: string) => {
