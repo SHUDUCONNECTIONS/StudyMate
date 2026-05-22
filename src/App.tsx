@@ -68,6 +68,7 @@ function App() {
   const [zipLeaderboard,  setZipLeaderboard]  = useState<{ name: string; score: number }[]>([]);
   const [wordLeaderboard, setWordLeaderboard] = useState<{ name: string; score: number }[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const lastChatNotifRef = useRef<Record<string, number>>({});
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
 
@@ -728,6 +729,25 @@ function App() {
     setMessages(prev => [...prev, userMsg]);
     try {
       await addDoc(collection(db, 'chats', activeSession.id, 'messages'), userMsg);
+
+      // Notify the other party — throttled to once every 10 minutes per session
+      const recipientId = currentUser.role === 'learner'
+        ? activeSession.counsellorId
+        : activeSession.learnerId;
+      const now = Date.now();
+      const lastNotif = lastChatNotifRef.current[activeSession.id] || 0;
+      if (now - lastNotif > 10 * 60 * 1000) {
+        lastChatNotifRef.current[activeSession.id] = now;
+        const senderName = activeSession.anonymous && currentUser.role === 'learner'
+          ? 'Anonymous Learner'
+          : currentUser.name;
+        await addNotification(
+          recipientId,
+          'New Message',
+          `${senderName} sent you a message. Open the app to reply.`,
+          'booking'
+        );
+      }
     } catch (err: any) {
       console.error('Message send failed:', err);
       setMessages(prev => [
