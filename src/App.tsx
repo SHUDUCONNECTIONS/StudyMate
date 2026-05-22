@@ -251,15 +251,6 @@ function App() {
       query(collection(db, 'chats', activeSession.id, 'messages'), orderBy('timestamp', 'asc')),
       (snapshot) => {
         setMessages(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Message)));
-      },
-      (error) => {
-        console.error('Chat listener error:', error);
-        setMessages([{
-          role: 'system',
-          content: 'Unable to load messages. Please check your connection or contact support.',
-          id: 'listen-err',
-          timestamp: Date.now(),
-        }]);
       }
     );
     return unsubscribe;
