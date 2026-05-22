@@ -172,7 +172,7 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
                 ))}
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {/* Left column */}
                 <div className="space-y-3">
                   <input type="text" placeholder="Full Name" className={inputCls}
@@ -277,7 +277,7 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
               <h3 className="font-display font-black uppercase text-brand-dark tracking-widest text-sm italic">POPIA Consent & Declaration</h3>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Left: Identity + Guardian */}
               <div className="space-y-2.5">
                 <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Identity Verification</p>
@@ -340,7 +340,7 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
                     <SignatureCanvas
                       ref={sigCanvas}
                       penColor='black'
-                      canvasProps={{ width: 320, height: 160, className: 'sigCanvas' }}
+                      canvasProps={{ width: Math.min(window.innerWidth - 80, 320), height: 160, className: 'sigCanvas' }}
                     />
                   </div>
                   <button onClick={() => sigCanvas.current.clear()}
