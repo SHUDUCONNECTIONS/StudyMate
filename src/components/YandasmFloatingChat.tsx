@@ -68,7 +68,7 @@ export const YandasmFloatingChat = () => {
       {/* Floating button */}
       <motion.button
         onClick={() => setIsOpen(o => !o)}
-        className="fixed bottom-6 right-6 z-[200] w-14 h-14 rounded-full bg-brand-yellow border-2 border-black shadow-[4px_4px_0px_0px_#000] flex items-center justify-center hover:shadow-[2px_2px_0px_0px_#000] active:shadow-none transition-shadow"
+        className="fixed bottom-24 right-6 z-[200] w-14 h-14 rounded-full bg-brand-yellow border-2 border-black shadow-[4px_4px_0px_0px_#000] flex items-center justify-center hover:shadow-[2px_2px_0px_0px_#000] active:shadow-none transition-shadow"
         whileTap={{ scale: 0.92 }}
         aria-label="Open Yandasm AI chat"
       >
@@ -93,7 +93,7 @@ export const YandasmFloatingChat = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 340, damping: 28 }}
-            className="fixed bottom-24 right-6 z-[199] w-[340px] max-w-[calc(100vw-1.5rem)] h-[480px] flex flex-col rounded-3xl border-2 border-black bg-white shadow-[6px_6px_0px_0px_#000] overflow-hidden"
+            className="fixed bottom-40 right-6 z-[199] w-[340px] max-w-[calc(100vw-1.5rem)] h-[480px] flex flex-col rounded-3xl border-2 border-black bg-white shadow-[6px_6px_0px_0px_#000] overflow-hidden"
           >
             {/* Header */}
             <div className="flex items-center gap-3 px-4 py-3 bg-brand-yellow border-b-2 border-black shrink-0">

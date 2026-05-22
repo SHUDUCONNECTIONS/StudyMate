@@ -1,11 +1,10 @@
 import { GoogleGenAI } from '@google/genai';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
-
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') return res.status(405).end();
 
   try {
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
     const { history } = req.body;
     const contents = history
       .filter((msg: any) => msg.role !== 'system')
