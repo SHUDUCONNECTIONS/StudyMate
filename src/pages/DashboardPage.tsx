@@ -261,9 +261,14 @@ export const DashboardPage = ({
                 </h3>
               </div>
               <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4 px-2">
-                {trustedCounsellors.map((c: any) => (
-                  <motion.div 
-                    key={c.id} 
+                {trustedCounsellors.map((c: any) => {
+                  const directBooking = userBookings.find((b: any) => b.counsellorId === c.id && b.time === 'Most Trusted Chat');
+                  const hasUnreadDirect = directBooking && (notifications || []).some((n: any) =>
+                    n.userId === user.id && n.bookingId === directBooking.id && n.title === 'New Message' && !n.read
+                  );
+                  return (
+                  <motion.div
+                    key={c.id}
                     whileHover={{ y: -5 }}
                     className="shrink-0 w-72 yandasm-pop-card bg-white border-2 border-black p-6 flex flex-col items-center text-center group relative overflow-hidden"
                   >
@@ -275,6 +280,11 @@ export const DashboardPage = ({
                       <div className="absolute -top-2 -right-2 bg-brand-orange p-2.5 rounded-full border-2 border-black text-white shadow-[3px_3px_0px_0px_#000]">
                         <Heart size={16} className="fill-white" />
                       </div>
+                      {hasUnreadDirect && (
+                        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-brand-blue text-white text-[8px] font-black uppercase px-2 py-0.5 rounded-full border-2 border-white shadow-md whitespace-nowrap">
+                          New Message
+                        </div>
+                      )}
                     </div>
                     <h4 className="font-display font-black text-brand-dark uppercase text-xl tracking-tighter truncate w-full italic">{c.name}</h4>
                     <p className="text-[10px] font-black text-brand-blue uppercase tracking-widest mb-6 opacity-60">{c.specialty}</p>
@@ -284,7 +294,8 @@ export const DashboardPage = ({
                       </button>
                     </div>
                   </motion.div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
