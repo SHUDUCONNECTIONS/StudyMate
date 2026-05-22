@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { PhoneCall, Smile, Shield, CheckCircle2, Send, Flag, AlertTriangle, ChevronLeft } from 'lucide-react';
+import { PhoneCall, Smile, CheckCircle2, Send, Flag, AlertTriangle, ChevronLeft } from 'lucide-react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { User, Message, Booking } from '../types';
@@ -74,7 +74,8 @@ export const ChatPage = ({
   const counterpart = session
     ? users.find(u => u.id === (user.role === 'learner' ? session.counsellorId : session.learnerId))
     : null;
-  const isAnonymousView = session?.anonymous && user.role === 'counsellor';
+  // Counsellors always see the real identity in chat — anonymity only applies to external booking lists
+  const isAnonymousView = false;
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full max-w-4xl mx-auto flex flex-col">
@@ -90,34 +91,18 @@ export const ChatPage = ({
           </button>
           {/* Avatar */}
           <div className="shrink-0 relative">
-            {isAnonymousView ? (
-              <div className="w-10 h-10 md:w-14 md:h-14 bg-brand-dark rounded-xl md:rounded-2xl border-2 border-black flex items-center justify-center shadow-[3px_3px_0px_0px_#000]">
-                <Shield size={18} className="text-white/60" />
-              </div>
-            ) : session ? (
-              <img
-                src={counterpart?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=Yandasm`}
-                className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl border-2 border-black shadow-[3px_3px_0px_0px_#000] object-cover"
-                alt=""
-              />
-            ) : (
-              <img
-                src="https://api.dicebear.com/7.x/bottts/svg?seed=Yandasm"
-                className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl border-2 border-black shadow-[3px_3px_0px_0px_#000]"
-                alt=""
-              />
-            )}
+            <img
+              src={counterpart?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=Yandasm`}
+              className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl border-2 border-black shadow-[3px_3px_0px_0px_#000] object-cover"
+              alt=""
+            />
             <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full" />
           </div>
 
           {/* Name + status */}
           <div className="min-w-0">
             <h2 className="text-sm md:text-xl font-display font-black text-brand-dark uppercase tracking-tighter truncate italic leading-none">
-              {isAnonymousView
-                ? 'Anonymous Learner'
-                : session
-                  ? (counterpart?.name || 'Unknown')
-                  : 'Yandasm AI'}
+              {session ? (counterpart?.name || 'Unknown') : 'Yandasm AI'}
             </h2>
             <p className="text-[8px] md:text-[10px] font-black text-brand-orange uppercase tracking-widest mt-0.5 truncate">
               {session
@@ -187,17 +172,11 @@ export const ChatPage = ({
                   {/* Participant Avatar */}
                   <div className="shrink-0 mt-1">
                     <div className={`w-10 h-10 rounded-2xl border-2 border-black shadow-[3px_3px_0px_0px_#000] overflow-hidden ${belongsToMe ? 'bg-brand-yellow' : 'bg-brand-lavender'}`}>
-                      {session?.anonymous && !belongsToMe ? (
-                        <div className="w-full h-full flex items-center justify-center bg-brand-dark text-white">
-                          <Shield size={14} />
-                        </div>
-                      ) : (
-                        <img 
-                          src={sender?.avatar || (msg.role === 'assistant' ? 'https://api.dicebear.com/7.x/bottts/svg?seed=Yandasm' : `https://api.dicebear.com/7.x/notionists/svg?seed=${msg.role}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`)} 
-                          alt="Avatar" 
-                          className="w-full h-full object-cover" 
-                        />
-                      )}
+                      <img
+                        src={sender?.avatar || (msg.role === 'assistant' ? 'https://api.dicebear.com/7.x/bottts/svg?seed=Yandasm' : `https://api.dicebear.com/7.x/notionists/svg?seed=${msg.role}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`)}
+                        alt="Avatar"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   </div>
 
