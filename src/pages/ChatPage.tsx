@@ -32,6 +32,8 @@ export const ChatPage = ({
   const [reportDetails, setReportDetails] = useState('');
   const [reportSending, setReportSending] = useState(false);
   const [reportSent, setReportSent] = useState(false);
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linkInput, setLinkInput] = useState('');
 
   const submitReport = async () => {
     if (!reportReason || !session) return;
@@ -47,24 +49,26 @@ export const ChatPage = ({
     }, 1800);
   };
 
-
   const shareMeetingLink = () => {
     if (user.role !== 'counsellor') return;
-    
-    let link = user.meetingLink;
-    let isNew = false;
-    if (!link) {
+    if (user.meetingLink) {
+      setChatInput(`Join me for a video call here: ${user.meetingLink}`);
+    } else {
       const generated = `https://meet.jit.si/Yandasm_${user.name.replace(/\s+/g, '_')}_${Math.random().toString(36).substring(7)}`;
-      link = prompt('No permanent link found. Generate a Yandasm Room link?', generated);
-      isNew = true;
+      setLinkInput(generated);
+      setShowLinkModal(true);
     }
-    
-    if (link) {
-      if (isNew && onUpdateUser) {
-        onUpdateUser({ ...user, meetingLink: link });
-      }
-      setChatInput(`Join me for a video call here: ${link}`);
+  };
+
+  const confirmMeetingLink = () => {
+    const trimmed = linkInput.trim();
+    if (!trimmed) return;
+    if (onUpdateUser) {
+      onUpdateUser({ ...user, meetingLink: trimmed });
     }
+    setChatInput(`Join me for a video call here: ${trimmed}`);
+    setShowLinkModal(false);
+    setLinkInput('');
   };
 
   const counterpart = session
@@ -267,6 +271,32 @@ export const ChatPage = ({
                   ))}
                </div>
                <button onClick={() => setIsRating(false)} className="text-[10px] font-black uppercase text-slate-400">Not now</button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Meeting link modal */}
+      <AnimatePresence>
+        {showLinkModal && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-md">
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
+              className="yandasm-card bg-white p-8 w-full max-w-md border-4 border-black shadow-[8px_8px_0px_0px_#000]"
+            >
+              <h3 className="text-xl font-display font-black text-brand-dark uppercase italic mb-2">Set Room Link</h3>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">This link will be saved to your profile and shared in chat</p>
+              <input
+                type="url"
+                value={linkInput}
+                onChange={e => setLinkInput(e.target.value)}
+                className="w-full h-12 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 text-sm font-bold focus:border-brand-blue outline-none mb-6"
+                placeholder="https://meet.jit.si/..."
+              />
+              <div className="flex gap-3">
+                <button onClick={() => { setShowLinkModal(false); setLinkInput(''); }} className="flex-1 py-3 rounded-xl border-2 border-slate-200 text-[10px] font-black uppercase text-slate-400 hover:bg-slate-50 transition-all">Cancel</button>
+                <button onClick={confirmMeetingLink} disabled={!linkInput.trim()} className="flex-1 py-3 bg-sky-500 text-white rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_#000] text-[10px] font-black uppercase disabled:opacity-50">Share Link</button>
+              </div>
             </motion.div>
           </div>
         )}

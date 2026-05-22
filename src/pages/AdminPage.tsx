@@ -29,6 +29,10 @@ export const AdminPage = ({ users, onApprove, onAddCounsellor, bookings, notific
       setAddError('All fields are required.');
       return;
     }
+    if (addForm.password.length < 8 || !/[A-Z]/.test(addForm.password) || !/[0-9]/.test(addForm.password)) {
+      setAddError('Password must be at least 8 characters with one uppercase letter and one number.');
+      return;
+    }
     setAddLoading(true);
     setAddError(null);
     const err = await onAddCounsellor(addForm.name, addForm.email, addForm.password, addForm.specialty);
@@ -327,7 +331,7 @@ export const AdminPage = ({ users, onApprove, onAddCounsellor, bookings, notific
                 {[
                   { label: 'Full Name', key: 'name', type: 'text', placeholder: 'e.g. Dr. Lerato Mokoena' },
                   { label: 'Email Address', key: 'email', type: 'email', placeholder: 'counsellor@school.ac.za' },
-                  { label: 'Password', key: 'password', type: 'password', placeholder: 'Minimum 6 characters' },
+                  { label: 'Password', key: 'password', type: 'password', placeholder: 'Min 8 chars, 1 uppercase, 1 number' },
                   { label: 'Specialty', key: 'specialty', type: 'text', placeholder: 'e.g. Academic Stress, Trauma' },
                 ].map(({ label, key, type, placeholder }) => (
                   <div key={key} className="space-y-2">

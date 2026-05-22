@@ -107,21 +107,35 @@ function App() {
   }, []);
 
   // --- REAL-TIME DATA ---
+  // Admins need all users; others only need counsellors + themselves
   useEffect(() => {
     if (!currentUser) return;
-    const unsubscribe = onSnapshot(collection(db, 'users'), (snapshot) => {
-      setUsers(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as User)));
+    const q = currentUser.role === 'admin'
+      ? collection(db, 'users')
+      : query(collection(db, 'users'), where('role', 'in', ['counsellor', 'admin']));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetched = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as User));
+      // Always include the current user in the list
+      setUsers(prev => {
+        const withoutSelf = fetched.filter(u => u.id !== currentUser.id);
+        return [currentUser, ...withoutSelf];
+      });
     });
     return unsubscribe;
-  }, [currentUser?.id]);
+  }, [currentUser?.id, currentUser?.role]);
 
+  // Scope bookings to what the current user is involved in
   useEffect(() => {
     if (!currentUser) return;
-    const unsubscribe = onSnapshot(collection(db, 'bookings'), (snapshot) => {
+    const field = currentUser.role === 'counsellor' ? 'counsellorId' : currentUser.role === 'learner' ? 'learnerId' : null;
+    const q = field
+      ? query(collection(db, 'bookings'), where(field, '==', currentUser.id))
+      : collection(db, 'bookings'); // admin sees all
+    const unsubscribe = onSnapshot(q, (snapshot) => {
       setBookings(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Booking)));
     });
     return unsubscribe;
-  }, [currentUser?.id]);
+  }, [currentUser?.id, currentUser?.role]);
 
   // --- GLOBAL GAME LEADERBOARDS ---
   // Gated on currentUser so request.auth is non-null when Firestore evaluates rules
@@ -912,9 +926,9 @@ function App() {
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<DashboardPage user={currentUser} users={users} bookings={bookings} onJoinSess={(b: any) => { setActiveSession(b); navigate('/chat'); }} onBook={handleBook} onUpdateAvailability={handleUpdateAvailability} onCancelBooking={handleCancelBooking} onUpdateBooking={handleUpdateBooking} notifications={notifications} setNotifications={setNotifications} onToggleTrust={handleToggleTrust} onStartDirectChat={startDirectChat} />} />
                 <Route path="/sessions" element={<SessionsPage user={currentUser} users={users} bookings={bookings} onJoinSession={(b) => { setActiveSession(b); navigate('/chat'); }} />} />
-                <Route path="/admin" element={<AdminPage users={users} onApprove={handleApprove} onAddCounsellor={handleAddCounsellor} bookings={bookings} notifications={notifications} onDownloadPDF={downloadPopiaPDF} />} />
+                <Route path="/admin" element={currentUser.role === 'admin' ? <AdminPage users={users} onApprove={handleApprove} onAddCounsellor={handleAddCounsellor} bookings={bookings} notifications={notifications} onDownloadPDF={downloadPopiaPDF} /> : <Navigate to="/dashboard" replace />} />
                 <Route path="/profile" element={<ProfilePage user={currentUser} onUpdate={handleUpdateProfile} onLogout={() => signOut(auth)} />} />
-                <Route path="/chat" element={<ChatPage user={currentUser} users={users} messages={messages} chatInput={chatInput} setChatInput={setChatInput} onSend={handleSendChat} isLoading={false} session={activeSession} onFinish={(id: string, rating: number) => submitRating(id, rating)} onReport={handleReport} onBack={() => navigate('/dashboard')} scrollRef={scrollRef} onUpdateUser={handleUpdateProfile} />} />
+                <Route path="/chat" element={<ChatPage user={currentUser} users={users} messages={messages} chatInput={chatInput} setChatInput={setChatInput} onSend={handleSendChat} isLoading={isLoading} session={activeSession} onFinish={(id: string, rating: number) => submitRating(id, rating)} onReport={handleReport} onBack={() => navigate('/dashboard')} scrollRef={scrollRef} onUpdateUser={handleUpdateProfile} />} />
                 <Route path="/emergency" element={<EmergencyPage />} />
                 <Route path="/resources" element={<ResourcesPage />} />
                 <Route path="/games" element={<GameHubPage onSelect={(g) => { setActiveGame(g); setShowGame(true); }} />} />

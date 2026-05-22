@@ -74,7 +74,7 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
-        alert("Photo must be smaller than 2MB");
+        setError("Photo must be smaller than 2MB");
         return;
       }
       const reader = new FileReader();
@@ -299,8 +299,16 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
                       setError('Please enter a valid email address.');
                       return;
                     }
-                    if (formData.password.length < 6) {
-                      setError('Password must be at least 6 characters.');
+                    if (formData.password.length < 8) {
+                      setError('Password must be at least 8 characters.');
+                      return;
+                    }
+                    if (!/[A-Z]/.test(formData.password)) {
+                      setError('Password must contain at least one uppercase letter.');
+                      return;
+                    }
+                    if (!/[0-9]/.test(formData.password)) {
+                      setError('Password must contain at least one number.');
                       return;
                     }
                     setStep(2);

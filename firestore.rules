@@ -1,0 +1,50 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Any signed-in user can read user profiles (needed to list counsellors for booking)
+    // Only the owner can write their own document
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /bookings/{bookingId} {
+      allow read, create: if request.auth != null;
+      // Only the learner or counsellor on the booking can update it
+      allow update: if request.auth != null && (
+        request.auth.uid == resource.data.learnerId ||
+        request.auth.uid == resource.data.counsellorId
+      );
+      allow delete: if request.auth != null && (
+        request.auth.uid == resource.data.learnerId ||
+        request.auth.uid == resource.data.counsellorId
+      );
+    }
+
+    // Only participants of a booking can read or write its messages
+    match /chats/{chatId}/messages/{msgId} {
+      allow read, write: if request.auth != null && (
+        request.auth.uid == get(/databases/$(database)/documents/bookings/$(chatId)).data.learnerId ||
+        request.auth.uid == get(/databases/$(database)/documents/bookings/$(chatId)).data.counsellorId
+      );
+    }
+
+    match /notifications/{notifId} {
+      allow create: if request.auth != null;
+      allow read, update: if request.auth != null &&
+        request.auth.uid == resource.data.userId;
+    }
+
+    match /scores/{doc} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null &&
+        request.resource.data.userId == request.auth.uid;
+    }
+
+    match /mail/{doc} {
+      allow create: if request.auth != null;
+    }
+
+  }
+}
