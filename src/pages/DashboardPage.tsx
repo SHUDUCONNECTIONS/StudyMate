@@ -445,14 +445,14 @@ export const DashboardPage = ({
             <h3 className="font-display font-black uppercase text-lg text-brand-dark tracking-widest px-2 flex items-center gap-3">
               <span className="w-3 h-3 bg-brand-pink rounded-full" /> Sessions
             </h3>
-            {userBookings.filter((b: any) => b.status === 'upcoming' || b.status === 'missed').length === 0 ? (
+            {userBookings.filter((b: any) => ( b.status === 'upcoming' || b.status === 'missed') && b.time !== 'Most Trusted Chat').length === 0 ? (
               <div className="yandasm-pop-card bg-brand-lavender/10 border-dashed border-2 flex flex-col items-center justify-center p-12 lg:p-16 text-slate-400">
                 <Calendar size={48} className="mb-4 text-brand-lavender animate-bounce" />
                 <p className="text-xs font-black uppercase tracking-[0.2em]">Rest is productive too. No sessions yet.</p>
               </div>
             ) : (
               <div className="space-y-4 lg:space-y-6">
-                {userBookings.filter((b: any) => b.status === 'upcoming' || b.status === 'missed').map((b: any, idx: number) => {
+                {userBookings.filter((b: any) => ( b.status === 'upcoming' || b.status === 'missed') && b.time !== 'Most Trusted Chat').map((b: any, idx: number) => {
                   const counterpart = users.find((u: any) => u.id === (user.role === 'learner' ? b.counsellorId : b.learnerId));
                   const appt = getApptDate(b.time);
                   const timeUntil = appt ? formatTimeUntil(appt) : null;
