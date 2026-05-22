@@ -11,6 +11,7 @@ export interface Notification {
   type: 'booking' | 'registration' | 'info' | 'report';
   timestamp: Date;
   read: boolean;
+  bookingId?: string;
 }
 
 export interface PopiaData {

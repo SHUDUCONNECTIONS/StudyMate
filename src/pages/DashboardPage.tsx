@@ -459,11 +459,19 @@ export const DashboardPage = ({
                   const apptLabel = appt ? formatApptLabel(new Date(appt)) : b.time;
                   const isStartingSoon = appt && (appt.getTime() - now.getTime()) > 0 && (appt.getTime() - now.getTime()) < 900000;
                   const isMissed = b.status === 'missed';
+                  const hasUnreadMessage = (notifications || []).some((n: any) =>
+                    n.userId === user.id && n.bookingId === b.id && n.title === 'New Message' && !n.read
+                  );
                   return (
                     <div key={b.id} className={`yandasm-pop-card flex flex-col sm:flex-row items-start sm:items-center justify-between group gap-6 ${isMissed ? 'bg-red-50 border-red-200' : isStartingSoon ? 'bg-emerald-50 border-emerald-200' : 'bg-white hover:bg-slate-50'}`}>
                       <div className="flex items-center gap-6 w-full sm:w-auto">
-                        <div className={`p-1 bg-white border-2 border-black rounded-2xl ${idx % 2 === 0 ? 'rotate-3' : '-rotate-3'} shrink-0 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]`}>
+                        <div className={`relative p-1 bg-white border-2 border-black rounded-2xl ${idx % 2 === 0 ? 'rotate-3' : '-rotate-3'} shrink-0 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]`}>
                           <img src={counterpart?.avatar} className="w-14 h-14 lg:w-16 lg:h-16 rounded-xl object-cover" />
+                          {hasUnreadMessage && (
+                            <div className="absolute -top-2 -right-2 bg-brand-blue text-white text-[8px] font-black uppercase px-2 py-0.5 rounded-full border-2 border-white shadow-md whitespace-nowrap">
+                              New Message
+                            </div>
+                          )}
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">

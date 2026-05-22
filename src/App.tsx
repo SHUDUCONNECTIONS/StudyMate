@@ -312,11 +312,12 @@ function App() {
     }).catch(() => {}); // silent fail if extension not installed
   };
 
-  const addNotification = async (userId: string, title: string, message: string, type: 'booking' | 'registration' | 'info' | 'report') => {
+  const addNotification = async (userId: string, title: string, message: string, type: 'booking' | 'registration' | 'info' | 'report', bookingId?: string) => {
     await addDoc(collection(db, 'notifications'), {
       userId, title, message, type,
       timestamp: serverTimestamp(),
       read: false,
+      ...(bookingId && { bookingId }),
     });
     // Send email to the recipient
     const recipient = users.find(u => u.id === userId);
@@ -752,7 +753,8 @@ function App() {
           recipientId,
           'New Message',
           `${senderName} sent you a message. Open the app to reply.`,
-          'booking'
+          'booking',
+          activeSession.id
         );
       }
     } catch (err: any) {
