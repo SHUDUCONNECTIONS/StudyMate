@@ -107,22 +107,13 @@ function App() {
   }, []);
 
   // --- REAL-TIME DATA ---
-  // Admins need all users; others only need counsellors + themselves
   useEffect(() => {
     if (!currentUser) return;
-    const q = currentUser.role === 'admin'
-      ? collection(db, 'users')
-      : query(collection(db, 'users'), where('role', 'in', ['counsellor', 'admin']));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetched = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as User));
-      // Always include the current user in the list
-      setUsers(prev => {
-        const withoutSelf = fetched.filter(u => u.id !== currentUser.id);
-        return [currentUser, ...withoutSelf];
-      });
+    const unsubscribe = onSnapshot(collection(db, 'users'), (snapshot) => {
+      setUsers(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as User)));
     });
     return unsubscribe;
-  }, [currentUser?.id, currentUser?.role]);
+  }, [currentUser?.id]);
 
   // Scope bookings to what the current user is involved in
   useEffect(() => {
