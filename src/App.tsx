@@ -597,6 +597,8 @@ function App() {
     };
     await setDoc(bookingRef, newBooking);
 
+    const counsellor = users.find(u => u.id === counsellorId);
+
     await addNotification(
       counsellorId,
       'New Session Booked',
@@ -604,7 +606,12 @@ function App() {
       'booking'
     );
 
-    const counsellor = users.find(u => u.id === counsellorId);
+    await addNotification(
+      currentUser.id,
+      'Booking Confirmed',
+      `Your session with ${counsellor?.name || 'your counsellor'} on ${formatBookingTime(time)} is confirmed.`,
+      'booking'
+    );
     if (counsellor?.availableSlots) {
       await updateDoc(doc(db, 'users', counsellorId), {
         availableSlots: counsellor.availableSlots.filter(s => s !== time),
@@ -858,7 +865,9 @@ function App() {
 
         <nav className="flex-1 px-4 space-y-3 overflow-y-auto no-scrollbar">
           <SidebarItem icon={Home} label="Dashboard" active={currentView === 'Dashboard'} onClick={() => { navigate('/dashboard'); setIsSidebarOpen(false); }} activeColor="bg-brand-blue" />
-          <SidebarItem icon={Calendar} label="My Sessions" active={currentView === 'Sessions'} onClick={() => { navigate('/sessions'); setIsSidebarOpen(false); }} activeColor="bg-brand-teal" />
+          {(currentUser.role !== 'learner' || bookings.some(b => b.learnerId === currentUser.id)) && (
+            <SidebarItem icon={Calendar} label="My Sessions" active={currentView === 'Sessions'} onClick={() => { navigate('/sessions'); setIsSidebarOpen(false); }} activeColor="bg-brand-teal" />
+          )}
           <SidebarItem icon={Gamepad2} label="Mental Games" active={currentView === 'Game'} onClick={() => { navigate('/games'); setIsSidebarOpen(false); }} activeColor="bg-brand-yellow" />
           <SidebarItem icon={UserIcon} label="My Profile" active={currentView === 'Profile'} onClick={() => { navigate('/profile'); setIsSidebarOpen(false); }} activeColor="bg-brand-orange" />
           {currentUser.role === 'admin' && <SidebarItem icon={ShieldCheck} label="Admin Panel" active={currentView === 'AdminControl'} onClick={() => { navigate('/admin'); setIsSidebarOpen(false); }} activeColor="bg-brand-teal" />}
@@ -927,7 +936,11 @@ function App() {
               <Routes>
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<DashboardPage user={currentUser} users={users} bookings={bookings} onJoinSess={(b: any) => { setActiveSession(b); navigate('/chat'); }} onBook={handleBook} onUpdateAvailability={handleUpdateAvailability} onCancelBooking={handleCancelBooking} onUpdateBooking={handleUpdateBooking} notifications={notifications} setNotifications={setNotifications} onToggleTrust={handleToggleTrust} onStartDirectChat={startDirectChat} />} />
-                <Route path="/sessions" element={<SessionsPage user={currentUser} users={users} bookings={bookings} onJoinSession={(b) => { setActiveSession(b); navigate('/chat'); }} />} />
+                <Route path="/sessions" element={
+                  currentUser.role !== 'learner' || bookings.some(b => b.learnerId === currentUser.id)
+                    ? <SessionsPage user={currentUser} users={users} bookings={bookings} onJoinSession={(b) => { setActiveSession(b); navigate('/chat'); }} />
+                    : <Navigate to="/dashboard" replace />
+                } />
                 <Route path="/admin" element={currentUser.role === 'admin' ? <AdminPage users={users} onApprove={handleApprove} onAddCounsellor={handleAddCounsellor} bookings={bookings} notifications={notifications} onDownloadPDF={downloadPopiaPDF} /> : <Navigate to="/dashboard" replace />} />
                 <Route path="/profile" element={<ProfilePage user={currentUser} onUpdate={handleUpdateProfile} onLogout={() => signOut(auth)} />} />
                 <Route path="/chat" element={activeSession ? <ChatPage user={currentUser} users={users} messages={messages} chatInput={chatInput} setChatInput={setChatInput} onSend={handleSendChat} isLoading={isLoading} session={activeSession} onFinish={(id: string, rating: number) => submitRating(id, rating)} onReport={handleReport} onBack={() => navigate('/dashboard')} scrollRef={scrollRef} onUpdateUser={handleUpdateProfile} /> : <Navigate to="/dashboard" replace />} />
