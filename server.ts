@@ -6,6 +6,7 @@ import { createServer as createViteServer } from "vite";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
+import wellnessHandler from "./api/wellness";
 
 dotenv.config();
 
@@ -41,6 +42,8 @@ async function startServer() {
   });
 
   app.use('/api', apiLimiter);
+
+  app.post('/api/wellness', wellnessHandler);
 
   // Socket.io Real-time Logic
   io.on("connection", (socket) => {

@@ -6,6 +6,7 @@ import { User, Booking, Notification } from '../types';
 import { MoodRain } from '../components/MoodRain';
 import { WeeklyCalendar } from '../components/WeeklyCalendar';
 import { CounsellorAvailabilityView } from '../components/CounsellorAvailabilityView';
+import { YandasmFloatingChat } from '../components/YandasmFloatingChat';
 
 // You'll need to extract WeeklyCalendar and CounsellorAvailabilityView as well, or pass them in
 // For now I'll assume they are passed as components or I'll extract them later.
@@ -723,13 +724,15 @@ export const DashboardPage = ({
 
       <AnimatePresence>
         {isManagingAvailability && (
-          <CounsellorAvailabilityView 
-            user={user} 
-            onClose={() => setIsManagingAvailability(false)} 
-            onUpdateAvailability={onUpdateAvailability} 
+          <CounsellorAvailabilityView
+            user={user}
+            onClose={() => setIsManagingAvailability(false)}
+            onUpdateAvailability={onUpdateAvailability}
           />
         )}
       </AnimatePresence>
+
+      <YandasmFloatingChat />
     </motion.div>
   );
 };
