@@ -74,8 +74,6 @@ export const ChatPage = ({
   const counterpart = session
     ? users.find(u => u.id === (user.role === 'learner' ? session.counsellorId : session.learnerId))
     : null;
-  // Counsellors always see the real identity in chat — anonymity only applies to external booking lists
-  const isAnonymousView = false;
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full max-w-4xl mx-auto flex flex-col">
@@ -102,12 +100,10 @@ export const ChatPage = ({
           {/* Name + status */}
           <div className="min-w-0">
             <h2 className="text-sm md:text-xl font-display font-black text-brand-dark uppercase tracking-tighter truncate italic leading-none">
-              {session ? (counterpart?.name || 'Unknown') : 'Yandasm AI'}
+              {counterpart?.name || 'Unknown'}
             </h2>
             <p className="text-[8px] md:text-[10px] font-black text-brand-orange uppercase tracking-widest mt-0.5 truncate">
-              {session
-                ? ((session as any).time === 'Most Trusted Chat' ? 'Direct chat • Secure' : `Session • ${session.anonymous ? 'Anonymous' : 'Identified'}`)
-                : 'AI wellness assistant'}
+              {(session as any)?.time === 'Most Trusted Chat' ? 'Direct chat • Secure' : `Session • ${session?.anonymous ? 'Anonymous' : 'Identified'}`}
             </p>
           </div>
         </div>

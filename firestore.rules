@@ -2,43 +2,70 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ── Users ────────────────────────────────────────────────────────────────
+    // Any signed-in user can read profiles (needed to display counsellors and
+    // learner names in chat). Only the account owner can update their own doc.
     match /users/{userId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
+      allow delete: if false;
     }
 
+    // ── Bookings ──────────────────────────────────────────────────────────────
+    // Any signed-in user can create a booking (learner books a counsellor).
+    // Only the learner or counsellor on the booking can read or modify it.
     match /bookings/{bookingId} {
-      allow read, create: if request.auth != null;
+      allow create: if request.auth != null;
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.learnerId ||
+        request.auth.uid == resource.data.counsellorId
+      );
       allow update: if request.auth != null && (
         request.auth.uid == resource.data.learnerId ||
         request.auth.uid == resource.data.counsellorId
       );
-      allow delete: if request.auth != null && (
-        request.auth.uid == resource.data.learnerId ||
-        request.auth.uid == resource.data.counsellorId
-      );
+      allow delete: if false;
     }
 
-    // Any signed-in user can access chat messages — access is controlled
-    // at the application level (users only ever receive their own session ID)
+    // ── Chat messages ─────────────────────────────────────────────────────────
+    // Any signed-in user can read/write chat messages. Session IDs are UUIDs
+    // that users only receive through the bookings they own, so guessing a
+    // chat path is not practical. Booking-level rules protect the session ID.
     match /chats/{chatId}/messages/{msgId} {
       allow read, write: if request.auth != null;
     }
 
+    // ── Notifications ─────────────────────────────────────────────────────────
+    // Any signed-in user can create a notification (to alert another user).
+    // Only the recipient can read or mark their own notifications as read.
     match /notifications/{notifId} {
       allow create: if request.auth != null;
       allow read, update: if request.auth != null &&
         request.auth.uid == resource.data.userId;
+      allow delete: if false;
     }
 
-    match /scores/{doc} {
+    // ── Game scores ───────────────────────────────────────────────────────────
+    // Scores are public (leaderboard). Only the owner can write their own score.
+    match /scores/{scoreId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null &&
+      allow create: if request.auth != null &&
         request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null &&
+        resource.data.userId == request.auth.uid;
+      allow delete: if false;
     }
 
-    match /mail/{doc} {
+    // ── Email queue (Trigger Email extension) ─────────────────────────────────
+    match /mail/{mailId} {
       allow create: if request.auth != null;
+      allow read, update, delete: if false;
+    }
+
+    // ── Deny everything else ──────────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
     }
 
   }
