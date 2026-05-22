@@ -48,9 +48,10 @@ export const YandasmFloatingChat = () => {
         body: JSON.stringify({ history: newMessages }),
       });
       const data = await res.json();
-      setMessages([...newMessages, { role: 'assistant', content: data.content || 'Sorry, something went wrong.' }]);
-    } catch {
-      setMessages([...newMessages, { role: 'assistant', content: 'Connection error. Please try again.' }]);
+      if (!res.ok) throw new Error(data.detail || data.error || `HTTP ${res.status}`);
+      setMessages([...newMessages, { role: 'assistant', content: data.content || "I couldn't generate a response. Please try again." }]);
+    } catch (err: any) {
+      setMessages([...newMessages, { role: 'assistant', content: `Error: ${err.message ?? 'Connection failed. Please try again.'}` }]);
     } finally {
       setIsLoading(false);
     }
