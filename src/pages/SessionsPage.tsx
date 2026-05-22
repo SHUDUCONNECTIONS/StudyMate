@@ -62,7 +62,7 @@ export const SessionsPage = ({ user, users, bookings, onJoinSession }: SessionsP
     [myUpcoming]);
 
   const specialSessions = useMemo(() =>
-    myUpcoming.filter(b => !DAYS.some(d => b.time.startsWith(d))),
+    myUpcoming.filter(b => !DAYS.some(d => b.time.startsWith(d)) && b.time !== 'Most Trusted Chat'),
     [myUpcoming]);
 
   const getSession = (day: string, time: string) =>
