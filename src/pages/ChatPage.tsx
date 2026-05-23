@@ -72,7 +72,7 @@ export const ChatPage = ({
   };
 
   const counterpart = session
-    ? users.find(u => u.id === (user.role === 'learner' ? session.counsellorId : session.learnerId))
+    ? users.find(u => u.id === ((user.role === 'learner' || user.role === 'student') ? session.counsellorId : session.learnerId))
     : null;
 
   return (
@@ -116,7 +116,7 @@ export const ChatPage = ({
               <PhoneCall size={10} /> <span className="hidden sm:inline">Room</span>
             </button>
           )}
-          {session && user.role === 'learner' && (
+          {session && (user.role === 'learner' || user.role === 'student') && (
             <button
               onClick={() => setIsReporting(true)}
               className="px-2 md:px-4 py-1.5 md:py-2 bg-red-50 text-red-500 border border-red-200 rounded-lg text-[7px] md:text-[10px] font-black uppercase flex items-center gap-1 hover:bg-red-100 transition-all"

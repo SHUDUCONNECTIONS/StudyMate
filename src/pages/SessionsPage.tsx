@@ -53,7 +53,7 @@ export const SessionsPage = ({ user, users, bookings, onJoinSession }: SessionsP
 
   const myUpcoming = useMemo(() =>
     bookings.filter(b =>
-      (user.role === 'learner' ? b.learnerId === user.id : b.counsellorId === user.id) &&
+      ((user.role === 'learner' || user.role === 'student') ? b.learnerId === user.id : b.counsellorId === user.id) &&
       b.status === 'upcoming'
     ), [bookings, user]);
 
@@ -69,7 +69,7 @@ export const SessionsPage = ({ user, users, bookings, onJoinSession }: SessionsP
     calendarSessions.find(b => b.time === `${day} ${time}`);
 
   const getCounterpart = (b: Booking) => {
-    const id = user.role === 'learner' ? b.counsellorId : b.learnerId;
+    const id = (user.role === 'learner' || user.role === 'student') ? b.counsellorId : b.learnerId;
     return users.find(u => u.id === id);
   };
 

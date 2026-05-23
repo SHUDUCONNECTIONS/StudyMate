@@ -119,7 +119,7 @@ function App() {
   // Scope bookings to what the current user is involved in
   useEffect(() => {
     if (!currentUser) return;
-    const field = currentUser.role === 'counsellor' ? 'counsellorId' : currentUser.role === 'learner' ? 'learnerId' : null;
+    const field = currentUser.role === 'counsellor' ? 'counsellorId' : (currentUser.role === 'learner' || currentUser.role === 'student') ? 'learnerId' : null;
     const q = field
       ? query(collection(db, 'bookings'), where(field, '==', currentUser.id))
       : collection(db, 'bookings'); // admin sees all
@@ -421,7 +421,8 @@ function App() {
     avatarSeed?: string,
     cvFileName?: string,
     profilePhoto?: string,
-    popiaData?: PopiaData
+    popiaData?: PopiaData,
+    fieldOfStudy?: string
   ) => {
     const buildUserDoc = (uid: string) => ({
       id: uid,
@@ -438,6 +439,7 @@ function App() {
       ...(qualifications && { qualifications }),
       ...(cvFileName && { cvFileName }),
       ...(profilePhoto && { profilePhoto }),
+      ...(fieldOfStudy && { fieldOfStudy }),
       ...(popiaData && { ...popiaData }),
       popiaConsent: role === 'admin' ? true : (popiaData?.popiaConsent ?? false),
     });
@@ -693,8 +695,8 @@ function App() {
   const startDirectChat = async (otherUserId: string) => {
     if (!currentUser) return;
     // Resolve correct learnerId/counsellorId regardless of which role calls this
-    const learnerId  = currentUser.role === 'learner' ? currentUser.id : otherUserId;
-    const counsellorId = currentUser.role === 'learner' ? otherUserId : currentUser.id;
+    const learnerId  = (currentUser.role === 'learner' || currentUser.role === 'student') ? currentUser.id : otherUserId;
+    const counsellorId = (currentUser.role === 'learner' || currentUser.role === 'student') ? otherUserId : currentUser.id;
 
     const existing = bookings.find(
       b => b.learnerId === learnerId && b.counsellorId === counsellorId && b.time === 'Most Trusted Chat' && b.status === 'upcoming'
@@ -716,7 +718,7 @@ function App() {
       await setDoc(bookingRef, newBooking);
       setActiveSession(newBooking);
       navigate('/chat');
-      const notifyId = currentUser.role === 'learner' ? counsellorId : learnerId;
+      const notifyId = (currentUser.role === 'learner' || currentUser.role === 'student') ? counsellorId : learnerId;
       await addNotification(notifyId, 'Direct Chat Started', `${currentUser.name} has started a direct chat.`, 'booking');
     }
   };
@@ -739,14 +741,14 @@ function App() {
       await addDoc(collection(db, 'chats', activeSession.id, 'messages'), userMsg);
 
       // Notify the other party — throttled to once every 10 minutes per session
-      const recipientId = currentUser.role === 'learner'
+      const recipientId = (currentUser.role === 'learner' || currentUser.role === 'student')
         ? activeSession.counsellorId
         : activeSession.learnerId;
       const now = Date.now();
       const lastNotif = lastChatNotifRef.current[activeSession.id] || 0;
       if (now - lastNotif > 10 * 60 * 1000) {
         lastChatNotifRef.current[activeSession.id] = now;
-        const senderName = activeSession.anonymous && currentUser.role === 'learner'
+        const senderName = activeSession.anonymous && (currentUser.role === 'learner' || currentUser.role === 'student')
           ? 'Anonymous Learner'
           : currentUser.name;
         await addNotification(

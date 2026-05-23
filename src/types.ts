@@ -1,5 +1,5 @@
 
-export type UserRole = 'admin' | 'counsellor' | 'learner';
+export type UserRole = 'admin' | 'counsellor' | 'learner' | 'student';
 export type CounsellorStatus = 'pending' | 'approved' | 'disapproved';
 export type Gender = 'male' | 'female' | 'other';
 
@@ -41,6 +41,7 @@ export interface User extends Partial<PopiaData> {
   qualifications?: string;
   department?: string;
   year?: number;
+  fieldOfStudy?: string;
   availableSlots?: string[];
   status?: CounsellorStatus;
   rating?: number;

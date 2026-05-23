@@ -14,7 +14,8 @@ interface AuthPageProps {
     name: string, email: string, pass: string, role: UserRole,
     specialty: string, department: string, year: number,
     qualifications: string, gender: string, avatarSeed: string,
-    cvFileName: string, profilePhoto: string, finalPopia?: PopiaData
+    cvFileName: string, profilePhoto: string, finalPopia?: PopiaData,
+    fieldOfStudy?: string
   ) => Promise<string | null>;
   onBack: () => void;
 }
@@ -36,6 +37,7 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
       return original(type, attrs);
     };
   }, []);
+  const [idInputType, setIdInputType] = useState<'id' | 'dob'>('id');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -48,7 +50,8 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
     gender: 'other' as any,
     avatarSeed: 'Thabo',
     cvFileName: '',
-    profilePhoto: ''
+    profilePhoto: '',
+    fieldOfStudy: ''
   });
 
   const [popiaData, setPopiaData] = useState<PopiaData>({
@@ -184,17 +187,30 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
                     <option value="other">Other / Neutral</option>
                   </select>
                   <select className={selectCls.replace('text-slate-500', 'text-slate-400')}
-                    value={formData.role} onChange={e => setFormData({...formData, role: e.target.value as any})}>
-                    <option value="learner">Student / Learner</option>
+                    value={formData.role} onChange={e => setFormData({...formData, role: e.target.value as any, year: 1, department: '', fieldOfStudy: ''})}>
+                    <option value="learner">Learner (High School)</option>
+                    <option value="student">Student (College / University)</option>
                     <option value="counsellor">Counsellor (Needs Approval)</option>
                   </select>
                   {formData.role === 'learner' && (
                     <>
-                      <input type="text" placeholder="School" className={inputCls}
+                      <input type="text" placeholder="School Name" className={inputCls}
                         value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})} />
                       <select className={selectCls.replace('text-slate-500', 'text-slate-400')}
                         value={formData.year} onChange={e => setFormData({...formData, year: parseInt(e.target.value)})}>
                         {[1,2,3,4,5,6,7,8,9,10,11,12].map(y => <option key={y} value={y}>Grade {y}</option>)}
+                      </select>
+                    </>
+                  )}
+                  {formData.role === 'student' && (
+                    <>
+                      <input type="text" placeholder="College / University Name" className={inputCls}
+                        value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})} />
+                      <input type="text" placeholder="Field of Study (e.g. BSc Computer Science)" className={inputCls}
+                        value={formData.fieldOfStudy} onChange={e => setFormData({...formData, fieldOfStudy: e.target.value})} />
+                      <select className={selectCls.replace('text-slate-500', 'text-slate-400')}
+                        value={formData.year} onChange={e => setFormData({...formData, year: parseInt(e.target.value)})}>
+                        {[1,2,3,4,5,6].map(y => <option key={y} value={y}>Year {y}</option>)}
                       </select>
                     </>
                   )}
@@ -285,15 +301,79 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
                   <input type="checkbox"
                     className="w-5 h-5 rounded-lg border-2 border-sky-400 text-sky-600 focus:ring-sky-600 cursor-pointer"
                     checked={popiaData.isForeign}
-                    onChange={e => setPopiaData({...popiaData, isForeign: e.target.checked})} />
+                    onChange={e => setPopiaData({...popiaData, isForeign: e.target.checked, passportNo: '', guardianPassportNo: ''})} />
                   <span className="text-[10px] font-black uppercase text-slate-500 group-hover:text-brand-dark transition-all tracking-widest">Foreign National</span>
                 </label>
-                <input type="text" placeholder="SA ID Number or DOB (YYYY-MM-DD)" className={inputCls}
-                  value={popiaData.id_or_dob} onChange={e => setPopiaData({...popiaData, id_or_dob: e.target.value})} />
+
+                {/* SA ID / Date of Birth toggle */}
+                {!popiaData.isForeign && (
+                  <div className="flex bg-slate-100 p-1 rounded-xl">
+                    <button type="button"
+                      onClick={() => { setIdInputType('id'); setPopiaData(p => ({...p, id_or_dob: ''})); }}
+                      className={`flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${idInputType === 'id' ? 'bg-white shadow-sm text-sky-600' : 'text-slate-400'}`}>
+                      SA ID Number
+                    </button>
+                    <button type="button"
+                      onClick={() => { setIdInputType('dob'); setPopiaData(p => ({...p, id_or_dob: ''})); }}
+                      className={`flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${idInputType === 'dob' ? 'bg-white shadow-sm text-sky-600' : 'text-slate-400'}`}>
+                      Date of Birth
+                    </button>
+                  </div>
+                )}
+
+                {/* SA ID input — digits only, exactly 13 */}
+                {!popiaData.isForeign && idInputType === 'id' && (
+                  <div className="relative">
+                    <input type="text" inputMode="numeric" placeholder="e.g. 9001015800085"
+                      className={`w-full h-11 bg-slate-50 border-2 rounded-xl px-4 pr-16 text-sm font-bold outline-none transition-colors ${
+                        popiaData.id_or_dob.length === 13 ? 'border-emerald-400 focus:border-emerald-500' : 'border-slate-100 focus:border-sky-600'
+                      }`}
+                      value={popiaData.id_or_dob}
+                      maxLength={13}
+                      onChange={e => {
+                        const digits = e.target.value.replace(/\D/g, '').slice(0, 13);
+                        setPopiaData(p => ({...p, id_or_dob: digits}));
+                      }} />
+                    <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-black tabular-nums ${
+                      popiaData.id_or_dob.length === 13 ? 'text-emerald-500' : 'text-slate-300'
+                    }`}>{popiaData.id_or_dob.length}/13</span>
+                  </div>
+                )}
+
+                {/* Date of Birth picker */}
+                {!popiaData.isForeign && idInputType === 'dob' && (
+                  <input type="date"
+                    className={`${inputCls} ${popiaData.id_or_dob ? 'border-emerald-400' : ''}`}
+                    value={popiaData.id_or_dob}
+                    max={new Date().toISOString().split('T')[0]}
+                    min="1900-01-01"
+                    onChange={e => setPopiaData(p => ({...p, id_or_dob: e.target.value}))} />
+                )}
+
+                {/* Foreign national: SA ID replaced by passport number */}
                 {popiaData.isForeign && (
-                  <input type="text" placeholder="Learner Passport Number"
-                    className="w-full h-11 bg-sky-50 border-2 border-sky-200 rounded-xl px-4 text-sm font-bold focus:border-sky-600 outline-none"
-                    value={popiaData.passportNo} onChange={e => setPopiaData({...popiaData, passportNo: e.target.value})} />
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <input type="text" placeholder="Passport Number"
+                        className={`w-full h-11 bg-sky-50 border-2 rounded-xl px-4 pr-16 text-sm font-bold outline-none transition-colors ${
+                          popiaData.passportNo && (popiaData.passportNo.length < 6)
+                            ? 'border-red-300 focus:border-red-400'
+                            : popiaData.passportNo && popiaData.passportNo.length >= 6
+                            ? 'border-emerald-400 focus:border-emerald-500'
+                            : 'border-sky-200 focus:border-sky-600'
+                        }`}
+                        value={popiaData.passportNo}
+                        maxLength={12}
+                        onChange={e => {
+                          const val = e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 12);
+                          setPopiaData(p => ({...p, passportNo: val}));
+                        }} />
+                      <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-black tabular-nums ${
+                        popiaData.passportNo && popiaData.passportNo.length >= 6 ? 'text-emerald-500' : 'text-slate-300'
+                      }`}>{popiaData.passportNo?.length || 0}/12</span>
+                    </div>
+                    <p className="text-[8px] font-bold text-slate-400 pl-1">Alphanumeric only · 6–12 characters</p>
+                  </div>
                 )}
 
                 <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest pt-1">Parent / Guardian</p>
@@ -312,9 +392,28 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
                 <input type="email" placeholder="Guardian Email Address" className={inputCls}
                   value={popiaData.guardianEmail} onChange={e => setPopiaData({...popiaData, guardianEmail: e.target.value})} />
                 {popiaData.isForeign && (
-                  <input type="text" placeholder="Guardian Passport Number"
-                    className="w-full h-11 bg-sky-50 border-2 border-sky-200 rounded-xl px-4 text-sm font-bold focus:border-sky-600 outline-none"
-                    value={popiaData.guardianPassportNo} onChange={e => setPopiaData({...popiaData, guardianPassportNo: e.target.value})} />
+                  <div className="space-y-1">
+                    <div className="relative">
+                      <input type="text" placeholder="Guardian Passport Number"
+                        className={`w-full h-11 bg-sky-50 border-2 rounded-xl px-4 pr-16 text-sm font-bold outline-none transition-colors ${
+                          popiaData.guardianPassportNo && popiaData.guardianPassportNo.length < 6
+                            ? 'border-red-300 focus:border-red-400'
+                            : popiaData.guardianPassportNo && popiaData.guardianPassportNo.length >= 6
+                            ? 'border-emerald-400 focus:border-emerald-500'
+                            : 'border-sky-200 focus:border-sky-600'
+                        }`}
+                        value={popiaData.guardianPassportNo}
+                        maxLength={12}
+                        onChange={e => {
+                          const val = e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 12);
+                          setPopiaData(p => ({...p, guardianPassportNo: val}));
+                        }} />
+                      <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-black tabular-nums ${
+                        popiaData.guardianPassportNo && popiaData.guardianPassportNo.length >= 6 ? 'text-emerald-500' : 'text-slate-300'
+                      }`}>{popiaData.guardianPassportNo?.length || 0}/12</span>
+                    </div>
+                    <p className="text-[8px] font-bold text-slate-400 pl-1">Alphanumeric only · 6–12 characters</p>
+                  </div>
                 )}
               </div>
 
@@ -354,6 +453,10 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
             <button
               onClick={async () => {
                 setError(null);
+                if (!popiaData.id_or_dob) { setError('Please enter your SA ID number or date of birth.'); return; }
+                if (!popiaData.isForeign && idInputType === 'id' && popiaData.id_or_dob.length !== 13) { setError('SA ID number must be exactly 13 digits.'); return; }
+                if (popiaData.isForeign && (!popiaData.passportNo || popiaData.passportNo.length < 6 || popiaData.passportNo.length > 12)) { setError('Passport number must be 6–12 alphanumeric characters.'); return; }
+                if (popiaData.isForeign && popiaData.guardianPassportNo && (popiaData.guardianPassportNo.length < 6 || popiaData.guardianPassportNo.length > 12)) { setError('Guardian passport number must be 6–12 alphanumeric characters.'); return; }
                 if (!popiaData.popiaConsent) { setError('Please check the consent box.'); return; }
                 if (!popiaData.guardianName || !popiaData.guardianContact) { setError('Parent/Guardian name and contact are required.'); return; }
                 if (sigCanvas.current.isEmpty()) { setError('Digital signature is required.'); return; }
@@ -364,7 +467,8 @@ export const AuthPage = ({ onLogin, onRegister, onBack }: AuthPageProps) => {
                   formData.name, formData.email, formData.password, formData.role,
                   formData.specialty, formData.department, formData.year,
                   formData.qualifications, formData.gender, formData.avatarSeed,
-                  formData.cvFileName, formData.profilePhoto, finalPopia
+                  formData.cvFileName, formData.profilePhoto, finalPopia,
+                  formData.fieldOfStudy
                 );
                 setLoading(false);
                 if (err) setError(err);

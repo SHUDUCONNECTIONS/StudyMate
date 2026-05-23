@@ -49,6 +49,7 @@ export const AdminPage = ({ users, onApprove, onAddCounsellor, bookings, notific
   const pending = users.filter((u: any) => u.role === 'counsellor' && u.status === 'pending');
   const allCounsellors = users.filter((u: any) => u.role === 'counsellor');
   const allLearners = users.filter((u: any) => u.role === 'learner');
+  const allStudents = users.filter((u: any) => u.role === 'student');
   const reports = useMemo(() =>
     (notifications || [])
       .filter(n => n.type === 'report')
@@ -79,7 +80,7 @@ export const AdminPage = ({ users, onApprove, onAddCounsellor, bookings, notific
             >
               {tab === 'pending' ? `Pending (${pending.length})` :
                tab === 'all' ? `Counsellors (${allCounsellors.length})` :
-               tab === 'students' ? `Students (${allLearners.length})` :
+               tab === 'students' ? `Members (${allLearners.length + allStudents.length})` :
                `Reports (${reports.length})`}
             </button>
           ))}
@@ -151,31 +152,32 @@ export const AdminPage = ({ users, onApprove, onAddCounsellor, bookings, notific
         )}
 
         {activeTab === 'students' && (
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-2">
-              {allLearners.map((l: any) => (
-                <div key={l.id} className="yandasm-card bg-white p-6 border-2 border-black flex items-center justify-between shadow-[4px_4px_0px_0px_#000] rounded-3xl">
-                   <div className="flex items-center gap-4">
+          <div className="space-y-8 px-2">
+            {/* Learners – High School */}
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-2">
+                <span className="w-2 h-2 bg-brand-blue rounded-full" /> Learners — High School ({allLearners.length})
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {allLearners.length === 0 ? (
+                  <p className="text-[10px] font-bold text-slate-300 uppercase col-span-2">No learners registered yet.</p>
+                ) : allLearners.map((l: any) => (
+                  <div key={l.id} className="yandasm-card bg-white p-6 border-2 border-black flex items-center justify-between shadow-[4px_4px_0px_0px_#000] rounded-3xl">
+                    <div className="flex items-center gap-4">
                       <div className="p-1 bg-white border-2 border-black rounded-xl">
                         <img src={l.avatar} className="w-12 h-12 rounded-lg" />
                       </div>
                       <div>
                         <p className="font-display font-black uppercase text-sm italic">{l.name}</p>
                         <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Grade {l.year} • {l.department || 'General'}</p>
-                        <button 
-                          onClick={() => setSelectedStudent(l)}
-                          className="text-[8px] font-black uppercase text-brand-teal hover:underline mt-1"
-                        >
+                        <button onClick={() => setSelectedStudent(l)} className="text-[8px] font-black uppercase text-brand-teal hover:underline mt-1">
                           View POPIA Details
                         </button>
                       </div>
-                   </div>
-                   <div className="flex flex-col items-end gap-1">
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
                       <div className="flex items-center gap-2">
-                        <button 
-                          onClick={() => onDownloadPDF(l)}
-                          className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 transition-all active:scale-95"
-                          title="Download PDF"
-                        >
+                        <button onClick={() => onDownloadPDF(l)} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 transition-all active:scale-95" title="Download PDF">
                           <Download size={14} />
                         </button>
                         <span className={`text-[8px] font-black uppercase ${l.popiaConsent ? 'text-emerald-500' : 'text-red-400'} tracking-widest`}>
@@ -183,10 +185,51 @@ export const AdminPage = ({ users, onApprove, onAddCounsellor, bookings, notific
                         </span>
                       </div>
                       <Shield size={12} className={l.popiaConsent ? 'text-emerald-500' : 'text-red-400'} />
-                   </div>
-                </div>
-              ))}
-           </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Students – College / University */}
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-2">
+                <span className="w-2 h-2 bg-brand-teal rounded-full" /> Students — College / University ({allStudents.length})
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {allStudents.length === 0 ? (
+                  <p className="text-[10px] font-bold text-slate-300 uppercase col-span-2">No university students registered yet.</p>
+                ) : allStudents.map((s: any) => (
+                  <div key={s.id} className="yandasm-card bg-white p-6 border-2 border-black flex items-center justify-between shadow-[4px_4px_0px_0px_#000] rounded-3xl">
+                    <div className="flex items-center gap-4">
+                      <div className="p-1 bg-white border-2 border-black rounded-xl">
+                        <img src={s.avatar} className="w-12 h-12 rounded-lg" />
+                      </div>
+                      <div>
+                        <p className="font-display font-black uppercase text-sm italic">{s.name}</p>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Year {s.year} • {s.fieldOfStudy || s.department || 'General'}</p>
+                        <p className="text-[8px] font-bold text-slate-300 uppercase">{s.department}</p>
+                        <button onClick={() => setSelectedStudent(s)} className="text-[8px] font-black uppercase text-brand-teal hover:underline mt-1">
+                          View POPIA Details
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => onDownloadPDF(s)} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 transition-all active:scale-95" title="Download PDF">
+                          <Download size={14} />
+                        </button>
+                        <span className={`text-[8px] font-black uppercase ${s.popiaConsent ? 'text-emerald-500' : 'text-red-400'} tracking-widest`}>
+                          {s.popiaConsent ? 'POPIA SECURE' : 'POPIA PENDING'}
+                        </span>
+                      </div>
+                      <Shield size={12} className={s.popiaConsent ? 'text-emerald-500' : 'text-red-400'} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         )}
 
         {/* POPIA Student Details Modal */}

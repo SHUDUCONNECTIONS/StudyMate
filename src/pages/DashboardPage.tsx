@@ -213,7 +213,7 @@ export const DashboardPage = ({
   };
   const stopBreathing = () => { setBreathing(false); setBPhase(0); setBCount(4); setBRound(1); };
 
-  const userBookings = useMemo(() => bookings.filter((b: any) => user.role === 'learner' ? b.learnerId === user.id : b.counsellorId === user.id), [bookings, user]);
+  const userBookings = useMemo(() => bookings.filter((b: any) => (user.role === 'learner' || user.role === 'student') ? b.learnerId === user.id : b.counsellorId === user.id), [bookings, user]);
 
   // For counsellors: who trusts them?
   const trustingLearners = users.filter((u: any) => u.role === 'learner' && u.trustedCounsellors?.includes(user.id));
@@ -231,6 +231,7 @@ export const DashboardPage = ({
           <p className="text-slate-500 font-bold mt-4 text-sm lg:text-base uppercase tracking-widest opacity-60">
             {user.role === 'counsellor' && user.status !== 'approved' ? 'Profile pending administrator review.' :
              user.role === 'learner' && user.department ? `${user.department} • Grade ${user.year}` :
+             user.role === 'student' && user.department ? `${user.department}${user.fieldOfStudy ? ` • ${user.fieldOfStudy}` : ''} • Year ${user.year}` :
              'Your wellness dashboard is live.'}
           </p>
         </div>
@@ -254,7 +255,7 @@ export const DashboardPage = ({
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
         <div className="md:col-span-8 space-y-10 lg:space-y-12">
-          {user.role === 'learner' && trustedCounsellors.length > 0 && (
+          {(user.role === 'learner' || user.role === 'student') && trustedCounsellors.length > 0 && (
             <div className="space-y-6">
               <div className="flex items-center justify-between px-2">
                 <h3 className="font-display font-black uppercase text-lg text-brand-dark tracking-widest flex items-center gap-3">
@@ -301,7 +302,7 @@ export const DashboardPage = ({
             </div>
           )}
 
-          {user.role === 'learner' && (
+          {(user.role === 'learner' || user.role === 'student') && (
             <div className="space-y-6">
               <div className="flex items-center justify-between px-2">
                 <h3 className="font-display font-black uppercase text-lg text-brand-dark tracking-widest flex items-center gap-3">
@@ -465,7 +466,7 @@ export const DashboardPage = ({
             ) : (
               <div className="space-y-4 lg:space-y-6">
                 {userBookings.filter((b: any) => ( b.status === 'upcoming' || b.status === 'missed') && b.time !== 'Most Trusted Chat').map((b: any, idx: number) => {
-                  const counterpart = users.find((u: any) => u.id === (user.role === 'learner' ? b.counsellorId : b.learnerId));
+                  const counterpart = users.find((u: any) => u.id === ((user.role === 'learner' || user.role === 'student') ? b.counsellorId : b.learnerId));
                   const appt = getApptDate(b.time);
                   const timeUntil = appt ? formatTimeUntil(appt) : null;
                   const apptLabel = appt ? formatApptLabel(new Date(appt)) : b.time;
@@ -488,7 +489,7 @@ export const DashboardPage = ({
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="font-display font-black text-brand-dark uppercase text-sm truncate">
-                              {b.anonymous && user.role === 'learner' ? 'Anonymous Session' : (b.anonymous && user.role === 'counsellor' ? 'Anonymous Learner' : counterpart?.name)}
+                              {b.anonymous && (user.role === 'learner' || user.role === 'student') ? 'Anonymous Session' : (b.anonymous && user.role === 'counsellor' ? 'Anonymous Learner' : counterpart?.name)}
                             </p>
                             {isMissed && <span className="text-[8px] font-black uppercase bg-red-500 text-white px-2 py-0.5 rounded-full">Missed</span>}
                             {b.attended && <span className="text-[8px] font-black uppercase bg-emerald-500 text-white px-2 py-0.5 rounded-full">✓ Attended</span>}
@@ -521,8 +522,8 @@ export const DashboardPage = ({
                                 <Plus size={14} /> Link
                               </button>
                             )}
-                            {((user.role === 'learner' && (b.meetingLink || counterpart?.meetingLink)) || (user.role === 'counsellor' && (b.meetingLink || user.meetingLink))) && (
-                              <a href={b.meetingLink || (user.role === 'learner' ? counterpart?.meetingLink : user.meetingLink)} target="_blank" rel="noopener noreferrer" className="btn-pop-teal py-2 px-4 text-[10px]">
+                            {(((user.role === 'learner' || user.role === 'student') && (b.meetingLink || counterpart?.meetingLink)) || (user.role === 'counsellor' && (b.meetingLink || user.meetingLink))) && (
+                              <a href={b.meetingLink || ((user.role === 'learner' || user.role === 'student') ? counterpart?.meetingLink : user.meetingLink)} target="_blank" rel="noopener noreferrer" className="btn-pop-teal py-2 px-4 text-[10px]">
                                 Video
                               </a>
                             )}
